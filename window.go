@@ -52,11 +52,6 @@ func (w *Window) MoveCursorPos(row uint16, col uint16) {
 	syscall.Write(0, []byte(c))
 }
 
-func (w *Window) UpdateLine(f *File) {
-	w.ClearLine(w.Cursor.Col)
-	fmt.Printf("%3d] %s", w.Cursor.Col, f.Lines[w.Cursor.Col])
-}
-
 // NEW
 type termios struct {
 	Iflag  uint32
