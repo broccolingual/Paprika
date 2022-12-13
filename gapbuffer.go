@@ -1,95 +1,69 @@
 package main
 
-import "fmt"
-
-func main() {
-	gBuf := NewGapBuffer([]rune("ありがとうございました"))
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-	gBuf.moveGap(8)
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-	gBuf.moveGap(2)
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-	gBuf.moveGap(8)
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-	gBuf.Insert(0, rune('大'))
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-	gBuf.Insert(1, rune('変'))
-	fmt.Println(gBuf)
-	fmt.Println(string(gBuf.Data), gBuf.GetSize())
-
-}
-
 type GapBuffer struct {
-	Size    uint
-	GapIdx  uint
-	GapSize uint
+	Size    int
+	GapIdx  int
+	GapSize int
 	Data    []rune
 }
 
-func NewGapBuffer(data []rune) *GapBuffer {
+func NewGapBuffer(data []rune, bufSize int) *GapBuffer {
 	gBuf := new(GapBuffer)
-	gBuf.Size = 320
-	gBuf.GapIdx = 256
-	gBuf.GapSize = 64
+	gBuf.Size = bufSize
+	gBuf.GapIdx = len(data)
+	gBuf.GapSize = bufSize - gBuf.GapIdx
 	gBuf.Data = data
 	gBuf.initGap()
 	return gBuf
 }
 
-func (gBuf *GapBuffer) GetSize() uint {
-	return uint(len(string(gBuf.Data)))
+func (gBuf *GapBuffer) GetSize() int {
+	return gBuf.Size - gBuf.GapSize
 }
 
 func (gBuf *GapBuffer) initGap() {
-	gBuf.Data = append(gBuf.Data, make([]rune, gBuf.GapIdx-uint(len(gBuf.Data))+gBuf.GapSize)...)
+	gBuf.Data = append(gBuf.Data, make([]rune, gBuf.GapIdx-len(gBuf.Data)+gBuf.GapSize)...)
 }
 
-func (gBuf *GapBuffer) moveGap(idx uint) {
+func (gBuf *GapBuffer) moveGap(idx int) {
 	if idx < 0 || idx > gBuf.Size {
 		return
 	}
 	oldGapIdx := gBuf.GapIdx
 	gBuf.GapIdx = idx
 	if oldGapIdx < idx {
-		buf := gBuf.Data[(oldGapIdx + gBuf.GapSize):(idx + gBuf.GapSize)]
-		for i, el := range buf {
-			gBuf.Data[oldGapIdx+uint(i)] = el
-		}
-		for i := oldGapIdx + gBuf.GapSize; i < idx+gBuf.GapSize; i++ {
-			gBuf.Data[uint(i)] = 0
+		buf := make([]rune, idx-oldGapIdx)
+		_ = copy(buf, gBuf.Data[(oldGapIdx+gBuf.GapSize):(idx+gBuf.GapSize)])
+		for i := 0; i < len(buf); i++ {
+			gBuf.Data[oldGapIdx+i] = buf[i]
 		}
 	} else if oldGapIdx > idx {
-		buf := gBuf.Data[idx:oldGapIdx]
-		for i, el := range buf {
-			gBuf.Data[idx+gBuf.GapSize+uint(i)] = el
-		}
-		for i := idx; i < oldGapIdx; i++ {
-			gBuf.Data[uint(i)] = 0
+		buf := make([]rune, oldGapIdx-idx)
+		_ = copy(buf, gBuf.Data[idx:oldGapIdx])
+		for i := 0; i < len(buf); i++ {
+			gBuf.Data[idx+gBuf.GapSize+i] = buf[i]
 		}
 	} else {
 		return
 	}
 }
 
-// 未使用
-func (gBuf *GapBuffer) Get(idx uint) rune {
+func (gBuf *GapBuffer) Get(idx int) rune {
 	if idx >= gBuf.GapIdx {
 		idx += gBuf.GapSize
 	}
 	return gBuf.Data[idx]
 }
 
-func (gBuf *GapBuffer) Insert(idx uint, ch rune) {
+func (gBuf *GapBuffer) GetAll() []rune {
+	var tmp []rune
+	for i := 0; i < int(gBuf.Size-gBuf.GapSize); i++ {
+		tmp = append(tmp, gBuf.Get(i))
+	}
+	return tmp
+}
+
+func (gBuf *GapBuffer) Insert(idx int, ch rune) {
 	if idx < 0 || idx > gBuf.Size {
 		return
 	}
@@ -99,7 +73,7 @@ func (gBuf *GapBuffer) Insert(idx uint, ch rune) {
 	gBuf.GapSize--
 }
 
-func (gBuf *GapBuffer) Erase(idx uint) {
+func (gBuf *GapBuffer) Erase(idx int) {
 	if idx < 0 || idx > gBuf.Size {
 		return
 	}
