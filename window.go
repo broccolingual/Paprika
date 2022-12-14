@@ -12,6 +12,7 @@ type Window struct {
 	Name    string
 	Cursor  *Cursor
 	KeyChan chan rune
+	Rows    *RowNode
 }
 
 type Cursor struct {
@@ -29,8 +30,8 @@ func NewWindow(name string) *Window {
 
 func NewCursor() *Cursor {
 	c := new(Cursor)
-	c.Row = 0
-	c.Col = 0
+	c.Row = 1
+	c.Col = 1
 	return c
 }
 
@@ -50,6 +51,19 @@ func (w *Window) InitCursorPos() {
 // row: 1~, col: 1~
 func (w *Window) MoveCursorPos(row uint16, col uint16) {
 	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", col, row)))
+}
+
+func (w *Window) Display() {
+	cnt := 0
+	tmp := w.Rows.Next
+	for {
+		if tmp == w.Rows {
+			break
+		}
+		cnt++
+		fmt.Printf("\033[3m%4d\033[0m | %s\n", cnt, string(tmp.Row.GetAll()))
+		tmp = tmp.Next
+	}
 }
 
 // Define termios(unix) object
@@ -101,8 +115,10 @@ func tcGetAttr(fd uintptr) *termios {
 // ICRNL: ^IGNCRの場合、CRをNLで置換
 // ISTRIP: 8bit目を落とす
 // IXON: 出力のXON/XOFFフロー制御の有効化
+
 // termios - Cflag
 // CS8: 文字サイズを8bitに指定
+
 // termios - Lflag
 // ECHO: 入力された文字をエコー
 // ICANON: カノニカルモードの有効化

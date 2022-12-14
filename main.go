@@ -1,13 +1,20 @@
 package main
 
-// func main() {
-// 	tty := new(Tty)
-// 	tty.EnableRawMode()
-// 	defer tty.DisableRawMode()
+import "os"
 
-// 	w := NewWindow("__MAIN__")
-// 	// get key event
-// 	go w.readKeys()
+func main() {
+	tty := new(Tty)
+	EnableASB()
+	tty.EnableRawMode()
+	defer tty.DisableRawMode()
+	defer DisableASB()
 
-// 	w.switchKeys()
-// }
+	w := NewWindow(os.Args[1])
+	w.InitCursorPos()
+	w.Rows = LoadFile(os.Args[1])
+
+	// get key event
+	go w.readKeys()
+
+	w.switchKeys()
+}

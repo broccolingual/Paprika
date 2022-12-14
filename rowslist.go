@@ -12,37 +12,6 @@ const (
 	NL_CRLF
 )
 
-func main() {
-	// Alternative Screen Buffer Settings
-	EnableASB()
-	// defer DisableASB()
-
-	// loading file
-	dummy := LoadFile("Makefile")
-
-	// display
-	cnt := 0
-	tmp := dummy.Next
-	for {
-		if tmp == dummy {
-			break
-		}
-		cnt++
-		fmt.Printf("%4d | %s\n", cnt, string(tmp.Row.GetAll()))
-		tmp = tmp.Next
-	}
-
-	DisableASB()
-
-	bytesCount := dummy.SaveFile("./bin/Makefile.bak", NL_LF)
-	fmt.Printf("Write %d bytes.\n", bytesCount)
-
-	// w := NewWindow("__MAIN__")
-	// go w.readKeys()
-
-	// w.switchKeys()
-}
-
 // Define rawnode object
 type RowNode struct {
 	Prev *RowNode

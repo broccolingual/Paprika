@@ -81,86 +81,105 @@ func (w *Window) readKeys() {
 }
 
 func (w *Window) switchKeys() {
+	w.InitCursorPos()
+	fmt.Printf("\033[7mEditing \"%s\"", w.Name)
+	w.MoveCursorPos(1, 2)
+	w.Display()
 	for {
 		r := <-w.KeyChan
-		w.Clear()
-		rows, cols := GetWinSize()
-		w.MoveCursorPos(uint16(cols/2)-10, uint16(rows/2))
-		fmt.Printf("%d(UTF-8) -> ", r)
+		w.InitCursorPos()
+		w.ClearLine(1)
+		fmt.Printf("\033[7mEditing \"%s\" | INPUT: ", w.Name)
+		// rows, cols := GetWinSize()
+		// w.MoveCursorPos(uint16(cols/2)-10, uint16(rows/2))
+		// fmt.Printf("%d(UTF-8) -> ", r)
 		switch r {
 		case CTRL_A:
-			fmt.Println("CTRL_A")
+			fmt.Printf("CTRL_A")
 		case CTRL_B:
-			fmt.Println("CTRL_B")
+			fmt.Printf("CTRL_B")
 		case CTRL_C:
-			fmt.Println("CTRL_C")
+			fmt.Printf("CTRL_C")
 		case CTRL_D:
-			fmt.Println("CTRL_D")
+			fmt.Printf("CTRL_D")
 		case CTRL_E:
-			fmt.Println("CTRL_E")
+			fmt.Printf("CTRL_E")
 		case CTRL_F:
-			fmt.Println("CTRL_F")
+			fmt.Printf("CTRL_F")
 		case CTRL_G:
-			fmt.Println("CTRL_G")
+			fmt.Printf("CTRL_G")
 		case CTRL_H:
-			fmt.Println("CTRL_H")
+			fmt.Printf("CTRL_H")
 		case CTRL_I:
-			fmt.Println("CTRL_I")
+			fmt.Printf("CTRL_I")
 		case CTRL_J:
-			fmt.Println("CTRL_J")
+			fmt.Printf("CTRL_J")
 		case CTRL_K:
-			fmt.Println("CTRL_K")
+			fmt.Printf("CTRL_K")
 		case CTRL_L:
-			fmt.Println("CTRL_L")
+			fmt.Printf("CTRL_L")
 		case CTRL_M:
-			fmt.Println("CTRL_M or ENTER")
+			fmt.Printf("CTRL_M or ENTER")
 			w.Cursor.Col += 1
 		case CTRL_N:
-			fmt.Println("CTRL_N")
+			fmt.Printf("CTRL_N")
 		case CTRL_O:
-			fmt.Println("CTRL_O")
+			fmt.Printf("CTRL_O")
 		case CTRL_P:
-			fmt.Println("CTRL_P")
+			fmt.Printf("CTRL_P")
 		case CTRL_Q:
-			fmt.Println("CTRL_Q")
+			fmt.Printf("CTRL_Q")
 		case CTRL_R:
-			fmt.Println("CTRL_R")
+			fmt.Printf("CTRL_R")
 		case CTRL_S: // SAVE
-			fmt.Println("CTRL_S")
+			fmt.Printf("CTRL_S")
+			_ = w.Rows.SaveFile("./bin/Makefile.bak", NL_CRLF)
 		case CTRL_T:
-			fmt.Println("CTRL_T")
+			fmt.Printf("CTRL_T")
 		case CTRL_U:
-			fmt.Println("CTRL_U")
+			fmt.Printf("CTRL_U")
 		case CTRL_V:
-			fmt.Println("CTRL_V")
+			fmt.Printf("CTRL_V")
 		case CTRL_W:
-			fmt.Println("CTRL_W")
+			fmt.Printf("CTRL_W")
 		case CTRL_X: // EXIT
-			fmt.Println("CTRL_X")
+			fmt.Printf("CTRL_X")
 			return
 		case CTRL_Y:
-			fmt.Println("CTRL_Y")
+			fmt.Printf("CTRL_Y")
 		case CTRL_Z:
-			fmt.Println("CTRL_Z")
+			fmt.Printf("CTRL_Z")
 		case ESC:
-			fmt.Println("ESC")
+			fmt.Printf("ESC")
 			return
 		case 32:
-			fmt.Println("SPACE")
+			fmt.Printf("SPACE")
 		case 127:
-			fmt.Println("BACKSPACE")
+			fmt.Printf("BACKSPACE")
 		case KEY_UP:
-			fmt.Println("KEY_UP")
-			w.Cursor.Col -= 1
+			fmt.Printf("KEY_UP")
+			if w.Cursor.Col > 1 {
+				w.Cursor.Col -= 1
+			}
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
+			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
 		case KEY_DOWN:
-			fmt.Println("KEY_DOWN")
+			fmt.Printf("KEY_DOWN")
 			w.Cursor.Col += 1
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
+			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
 		case KEY_RIGHT:
-			fmt.Println("KEY_RIGHT")
+			fmt.Printf("KEY_RIGHT")
 			w.Cursor.Row += 1
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
+			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
 		case KEY_LEFT:
-			fmt.Println("KEY_LEFT")
-			w.Cursor.Row -= 1
+			fmt.Printf("KEY_LEFT")
+			if w.Cursor.Row > 1 {
+				w.Cursor.Row -= 1
+			}
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Cursor.Col, w.Cursor.Row)
+			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
 		default:
 			fmt.Printf(string(r))
 		}
