@@ -82,7 +82,7 @@ func (w *Window) readKeys() {
 
 func (w *Window) switchKeys() {
 	w.InitCursorPos()
-	fmt.Printf("\033[7mEditing \"%s\"", w.Name)
+	fmt.Printf("\033[7mEditing \"%s\"\033[0m", w.Name)
 	w.MoveCursorPos(1, 2)
 	w.Display()
 	for {
