@@ -47,9 +47,9 @@ func (w *Window) InitCursorPos() {
 	syscall.Write(0, []byte("\033[1;1H"))
 }
 
+// row: 1~, col: 1~
 func (w *Window) MoveCursorPos(row uint16, col uint16) {
-	c := fmt.Sprintf("\033[%d;%dH", col+1, row+1)
-	syscall.Write(0, []byte(c))
+	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", col, row)))
 }
 
 // NEW
@@ -114,4 +114,14 @@ func GetWinSize() (uint16, uint16) {
 	var w WinSize
 	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, os.Stdout.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&w)))
 	return uint16(w.Row), uint16(w.Col)
+}
+
+// Enable Alternative Screen Buffer
+func EnableASB() {
+	syscall.Write(0, []byte("\033[?1049h"))
+}
+
+// Disable Alternative Screen Buffer
+func DisableASB() {
+	syscall.Write(0, []byte("\033[?1049l"))
 }

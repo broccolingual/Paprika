@@ -144,6 +144,7 @@ func (w *Window) switchKeys() {
 			fmt.Println("CTRL_Z")
 		case ESC:
 			fmt.Println("ESC")
+			return
 		case 32:
 			fmt.Println("SPACE")
 		case 127:

@@ -7,25 +7,22 @@ import (
 	"os"
 )
 
+const (
+	NL_LF = iota
+	NL_CRLF
+)
+
 func main() {
+	// Alternative Screen Buffer Settings
+	EnableASB()
+	// defer DisableASB()
+
+	// loading file
 	dummy := LoadFile("Makefile")
-	// insert
-	cnt := 0
-	tmp := dummy.Next
-	for {
-		if tmp == dummy {
-			break
-		}
-		if cnt == 3 {
-			tmp.Insert([]rune("THIS IS APPEND LINE !"), 512)
-		}
-		cnt++
-		tmp = tmp.Next
-	}
 
 	// display
-	cnt = 0
-	tmp = dummy.Next
+	cnt := 0
+	tmp := dummy.Next
 	for {
 		if tmp == dummy {
 			break
@@ -34,6 +31,16 @@ func main() {
 		fmt.Printf("%4d | %s\n", cnt, string(tmp.Row.GetAll()))
 		tmp = tmp.Next
 	}
+
+	DisableASB()
+
+	bytesCount := dummy.SaveFile("./bin/Makefile.bak", NL_LF)
+	fmt.Printf("Write %d bytes.\n", bytesCount)
+
+	// w := NewWindow("__MAIN__")
+	// go w.readKeys()
+
+	// w.switchKeys()
 }
 
 type RowNode struct {
@@ -87,4 +94,44 @@ func LoadFile(fileName string) *RowNode {
 		}
 	}
 	return dummy
+}
+
+func (dummy *RowNode) SaveFile(fileName string, nl int) int {
+	var fp *os.File
+	_, err := os.Stat(fileName)
+	if os.IsNotExist(err) {
+		fp, err = os.Create(fileName)
+	} else {
+		fp, err = os.Open(fileName)
+	}
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
+
+	var buf string
+
+	cnt := 0
+	tmp := dummy.Next
+	for {
+		if tmp == dummy {
+			break
+		}
+		cnt++
+		buf += fmt.Sprintf("%s", string(tmp.Row.GetAll()))
+		if nl == NL_LF {
+			buf += "\n"
+		} else if nl == NL_CRLF {
+			buf += "\r\n"
+		} else {
+			buf += "\n"
+		}
+		tmp = tmp.Next
+	}
+
+	bytesCount, err := fp.Write([]byte(buf))
+	if err != nil {
+		panic(err)
+	}
+	return bytesCount
 }
