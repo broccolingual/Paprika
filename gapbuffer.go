@@ -1,5 +1,6 @@
 package main
 
+// Define gapbuffer object
 type GapBuffer struct {
 	Size    int
 	GapIdx  int
@@ -43,8 +44,6 @@ func (gBuf *GapBuffer) moveGap(idx int) {
 		for i := 0; i < len(buf); i++ {
 			gBuf.Data[idx+gBuf.GapSize+i] = buf[i]
 		}
-	} else {
-		return
 	}
 }
 

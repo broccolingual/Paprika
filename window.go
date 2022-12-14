@@ -52,7 +52,7 @@ func (w *Window) MoveCursorPos(row uint16, col uint16) {
 	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", col, row)))
 }
 
-// NEW
+// Define termios(unix) object
 type termios struct {
 	Iflag  uint32
 	Oflag  uint32
@@ -63,10 +63,12 @@ type termios struct {
 	Ospeed uint32
 }
 
+// Define original tty object
 type Tty struct {
 	original *termios
 }
 
+// Define winsize object
 type WinSize struct {
 	Row    uint16
 	Col    uint16
@@ -74,6 +76,7 @@ type WinSize struct {
 	Ypixel uint16
 }
 
+// Set termios attribute
 func tcSetAttr(fd uintptr, termios *termios) error {
 	// TCSETS+1 == TCSETSW, because TCSAFLUSH doesn't exist
 	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(syscall.TCSETS+1), uintptr(unsafe.Pointer(termios))); err != 0 {
@@ -82,6 +85,7 @@ func tcSetAttr(fd uintptr, termios *termios) error {
 	return nil
 }
 
+// Get termios attribute
 func tcGetAttr(fd uintptr) *termios {
 	var termios = &termios{}
 	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TCGETS, uintptr(unsafe.Pointer(termios))); err != 0 {
@@ -90,6 +94,20 @@ func tcGetAttr(fd uintptr) *termios {
 	return termios
 }
 
+// Enable Raw / Non Canonical Mode
+// termios - Iflag
+// ^BRKINT: BrakeをNullバイトとして読み込む
+// INPCK: 入力のパリティチェック有効化
+// ICRNL: ^IGNCRの場合、CRをNLで置換
+// ISTRIP: 8bit目を落とす
+// IXON: 出力のXON/XOFFフロー制御の有効化
+// termios - Cflag
+// CS8: 文字サイズを8bitに指定
+// termios - Lflag
+// ECHO: 入力された文字をエコー
+// ICANON: カノニカルモードの有効化
+// IEXTEN: 実装依存の入力処理の有効化
+// ISIG: シグナルを発生させる(Ctrl+C/Z etc...)
 func (t *Tty) EnableRawMode() {
 	t.original = tcGetAttr(os.Stdin.Fd())
 	var raw termios
@@ -104,12 +122,14 @@ func (t *Tty) EnableRawMode() {
 	}
 }
 
+// Disable Raw / Non Canonical mode
 func (t *Tty) DisableRawMode() {
 	if e := tcSetAttr(os.Stdin.Fd(), t.original); e != nil {
 		log.Fatalf("Problem disabling raw mode: %s\n", e)
 	}
 }
 
+// Get console window size
 func GetWinSize() (uint16, uint16) {
 	var w WinSize
 	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, os.Stdout.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&w)))

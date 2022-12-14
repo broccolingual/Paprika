@@ -43,6 +43,7 @@ func main() {
 	// w.switchKeys()
 }
 
+// Define rawnode object
 type RowNode struct {
 	Prev *RowNode
 	Next *RowNode
@@ -74,6 +75,7 @@ func (e *RowNode) Insert(data []rune, bufSize int) {
 	_new.Row = NewGapBuffer(data, bufSize)
 }
 
+// Make rawslist from loading file
 func LoadFile(fileName string) *RowNode {
 	fp, err := os.Open(fileName)
 	if err != nil {
@@ -96,6 +98,7 @@ func LoadFile(fileName string) *RowNode {
 	return dummy
 }
 
+// Save file from rowslist
 func (dummy *RowNode) SaveFile(fileName string, nl int) int {
 	var fp *os.File
 	_, err := os.Stat(fileName)
