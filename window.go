@@ -42,8 +42,7 @@ func (w *Window) Clear() {
 	syscall.Write(0, []byte("\033[2J"))
 }
 
-func (w *Window) ClearLine(col uint16) {
-	w.MoveCursorPos(0, col)
+func (w *Window) ClearLine() {
 	syscall.Write(0, []byte("\033[2K"))
 }
 
@@ -57,12 +56,12 @@ func (w *Window) MoveCursorPos(row uint16, col uint16) {
 }
 
 func (w *Window) Draw() {
+	w.InitCursorPos()
 	pNode := w.Editor.Root
-	cnt := 1
 	if pNode.Prev == pNode.Next {
 		return
 	}
-	for {
+	for i := 1; i < w.MaxRows; i++ {
 		pNode = pNode.Next
 		if pNode.Row == nil {
 			break
@@ -72,6 +71,11 @@ func (w *Window) Draw() {
 		} else {
 			fmt.Printf("  %s\n", string(pNode.Row.GetAll()))
 		}
-		cnt++
 	}
+}
+
+func (w *Window) UpdateStatusBar() {
+	w.MoveCursorPos(1, uint16(w.MaxRows))
+	w.ClearLine()
+	fmt.Printf("\033[7m> %s | Ln %d, Col %d\033[m", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row)
 }
