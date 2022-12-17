@@ -11,6 +11,7 @@ func main() {
 
 	window := NewWindow(os.Args[1])
 	window.Editor.LoadFile()
+	window.Editor.CurrentNode = window.Editor.CurrentNode.Next
 
 	go window.readKeys()
 	window.switchKeys()

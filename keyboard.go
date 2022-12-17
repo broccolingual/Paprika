@@ -151,48 +151,68 @@ func (w *Window) switchKeys() {
 			return
 		case 32:
 			fmt.Printf("SPACE")
+			w.Editor.Cursor.Row += 1
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Row-2), r)
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		case 127:
 			fmt.Printf("BACKSPACE")
+			if w.Editor.Cursor.Row > 1 {
+				w.Editor.Cursor.Row -= 1
+				w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Row - 1))
+			}
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		case KEY_UP:
 			fmt.Printf("KEY_UP")
 			if w.Editor.Cursor.Col > 1 {
 				w.Editor.Cursor.Col -= 1
+				w.Editor.Cursor.Row = 1
+				w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
 			}
 			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
-			w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
 			w.MoveCursorPos(1, 2)
 			w.Draw()
-			w.InitCursorPos()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		case KEY_DOWN:
 			fmt.Printf("KEY_DOWN")
 			w.Editor.Cursor.Col += 1
+			w.Editor.Cursor.Row = 1
 			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 			w.Editor.CurrentNode = w.Editor.CurrentNode.Next
 			w.MoveCursorPos(1, 2)
 			w.Draw()
-			w.InitCursorPos()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		case KEY_RIGHT:
 			fmt.Printf("KEY_RIGHT")
-			w.Editor.Cursor.Row += 1
+			if w.Editor.Cursor.Row <= uint16(w.Editor.CurrentNode.Row.GetSize()) {
+				w.Editor.Cursor.Row += 1
+			}
 			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 			w.MoveCursorPos(1, 2)
 			w.Draw()
-			w.InitCursorPos()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		case KEY_LEFT:
 			fmt.Printf("KEY_LEFT")
 			if w.Editor.Cursor.Row > 1 {
 				w.Editor.Cursor.Row -= 1
 			}
 			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 			w.MoveCursorPos(1, 2)
 			w.Draw()
-			w.InitCursorPos()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		default:
 			fmt.Printf(string(r))
+			w.Editor.Cursor.Row += 1
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Row-2), r)
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
 		}
 	}
 }

@@ -67,7 +67,7 @@ func (w *Window) Draw() {
 		if pNode.Row == nil {
 			break
 		}
-		if cnt == int(w.Editor.Cursor.Col) {
+		if pNode == w.Editor.CurrentNode {
 			fmt.Printf("> %s\n", string(pNode.Row.GetAll()))
 		} else {
 			fmt.Printf("  %s\n", string(pNode.Row.GetAll()))
