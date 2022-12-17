@@ -87,12 +87,9 @@ func (w *Window) switchKeys() {
 	w.Draw()
 	for {
 		r := <-w.KeyChan
+		w.Clear()
 		w.InitCursorPos()
-		w.ClearLine(1)
 		fmt.Printf("\033[7mEditing \"%s\" | INPUT: ", w.Editor.FilePath)
-		// rows, cols := GetWinSize()
-		// w.MoveCursorPos(uint16(cols/2)-10, uint16(rows/2))
-		// fmt.Printf("%d(UTF-8) -> ", r)
 		switch r {
 		case CTRL_A:
 			fmt.Printf("CTRL_A")
@@ -161,25 +158,39 @@ func (w *Window) switchKeys() {
 			if w.Editor.Cursor.Col > 1 {
 				w.Editor.Cursor.Col -= 1
 			}
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
+			w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.InitCursorPos()
 		case KEY_DOWN:
 			fmt.Printf("KEY_DOWN")
 			w.Editor.Cursor.Col += 1
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
+			w.Editor.CurrentNode = w.Editor.CurrentNode.Next
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.InitCursorPos()
 		case KEY_RIGHT:
 			fmt.Printf("KEY_RIGHT")
 			w.Editor.Cursor.Row += 1
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.InitCursorPos()
 		case KEY_LEFT:
 			fmt.Printf("KEY_LEFT")
 			if w.Editor.Cursor.Row > 1 {
 				w.Editor.Cursor.Row -= 1
 			}
 			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
-			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
+			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col+1)
+			w.MoveCursorPos(1, 2)
+			w.Draw()
+			w.InitCursorPos()
 		default:
 			fmt.Printf(string(r))
 		}

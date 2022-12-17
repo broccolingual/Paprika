@@ -57,16 +57,21 @@ func (w *Window) MoveCursorPos(row uint16, col uint16) {
 }
 
 func (w *Window) Draw() {
-	e := w.Editor
-	cnt := 0
-	if e.MoveNextRow().IsRoot() {
+	pNode := w.Editor.Root
+	cnt := 1
+	if pNode.Prev == pNode.Next {
 		return
 	}
 	for {
-		if e.CurrentNode.IsRoot() {
+		pNode = pNode.Next
+		if pNode.Row == nil {
 			break
 		}
+		if cnt == int(w.Editor.Cursor.Col) {
+			fmt.Printf("> %s\n", string(pNode.Row.GetAll()))
+		} else {
+			fmt.Printf("  %s\n", string(pNode.Row.GetAll()))
+		}
 		cnt++
-		// fmt.Printf("\033[3m%4d\033[0m | %s\n", cnt, string(e.MoveNextRow().Row.GetAll()))
 	}
 }
