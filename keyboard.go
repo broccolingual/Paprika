@@ -82,14 +82,14 @@ func (w *Window) readKeys() {
 
 func (w *Window) switchKeys() {
 	w.InitCursorPos()
-	fmt.Printf("\033[7mEditing \"%s\"\033[0m", w.Name)
+	fmt.Printf("\033[7mEditing \"%s\"\033[0m", w.Editor.FilePath)
 	w.MoveCursorPos(1, 2)
-	w.Display()
+	w.Draw()
 	for {
 		r := <-w.KeyChan
 		w.InitCursorPos()
 		w.ClearLine(1)
-		fmt.Printf("\033[7mEditing \"%s\" | INPUT: ", w.Name)
+		fmt.Printf("\033[7mEditing \"%s\" | INPUT: ", w.Editor.FilePath)
 		// rows, cols := GetWinSize()
 		// w.MoveCursorPos(uint16(cols/2)-10, uint16(rows/2))
 		// fmt.Printf("%d(UTF-8) -> ", r)
@@ -120,7 +120,7 @@ func (w *Window) switchKeys() {
 			fmt.Printf("CTRL_L")
 		case CTRL_M:
 			fmt.Printf("CTRL_M or ENTER")
-			w.Cursor.Col += 1
+			w.Editor.Cursor.Col += 1
 		case CTRL_N:
 			fmt.Printf("CTRL_N")
 		case CTRL_O:
@@ -133,7 +133,7 @@ func (w *Window) switchKeys() {
 			fmt.Printf("CTRL_R")
 		case CTRL_S: // SAVE
 			fmt.Printf("CTRL_S")
-			_ = w.Rows.SaveFile("./bin/Makefile.bak", NL_CRLF)
+			_ = w.Editor.SaveNew("./bin/Makefile.bak", NL_CRLF)
 		case CTRL_T:
 			fmt.Printf("CTRL_T")
 		case CTRL_U:
@@ -158,28 +158,28 @@ func (w *Window) switchKeys() {
 			fmt.Printf("BACKSPACE")
 		case KEY_UP:
 			fmt.Printf("KEY_UP")
-			if w.Cursor.Col > 1 {
-				w.Cursor.Col -= 1
+			if w.Editor.Cursor.Col > 1 {
+				w.Editor.Cursor.Col -= 1
 			}
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
-			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
 		case KEY_DOWN:
 			fmt.Printf("KEY_DOWN")
-			w.Cursor.Col += 1
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
-			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
+			w.Editor.Cursor.Col += 1
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
 		case KEY_RIGHT:
 			fmt.Printf("KEY_RIGHT")
-			w.Cursor.Row += 1
-			fmt.Printf(" | Row: %d, Col: %d\n", w.Cursor.Col, w.Cursor.Row)
-			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
+			w.Editor.Cursor.Row += 1
+			fmt.Printf(" | Row: %d, Col: %d\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
 		case KEY_LEFT:
 			fmt.Printf("KEY_LEFT")
-			if w.Cursor.Row > 1 {
-				w.Cursor.Row -= 1
+			if w.Editor.Cursor.Row > 1 {
+				w.Editor.Cursor.Row -= 1
 			}
-			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Cursor.Col, w.Cursor.Row)
-			w.MoveCursorPos(w.Cursor.Row+7, w.Cursor.Col+1)
+			fmt.Printf(" | Row: %d, Col: %d\033[0m\n", w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+			w.MoveCursorPos(w.Editor.Cursor.Row+7, w.Editor.Cursor.Col+1)
 		default:
 			fmt.Printf(string(r))
 		}

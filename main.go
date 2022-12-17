@@ -9,12 +9,9 @@ func main() {
 	defer tty.DisableRawMode()
 	defer DisableASB()
 
-	w := NewWindow(os.Args[1])
-	w.InitCursorPos()
-	w.Rows = LoadFile(os.Args[1])
+	window := NewWindow(os.Args[1])
+	window.Editor.LoadFile()
 
-	// get key event
-	go w.readKeys()
-
-	w.switchKeys()
+	go window.readKeys()
+	window.switchKeys()
 }
