@@ -14,5 +14,5 @@ func main() {
 	window.Editor.CurrentNode = window.Editor.CurrentNode.Next
 
 	go window.readKeys()
-	window.switchKeys()
+	window.detectKeys()
 }

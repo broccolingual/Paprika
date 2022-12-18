@@ -51,8 +51,24 @@ func (w *Window) InitCursorPos() {
 }
 
 // row: 1~, col: 1~
-func (w *Window) MoveCursorPos(row uint16, col uint16) {
-	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", col, row)))
+func (w *Window) MoveCursorPos(col uint16, row uint16) {
+	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", row, col)))
+}
+
+func (w *Window) DrawFocusRow(lineNum int, rowData string) {
+	w.MoveCursorPos(1, uint16(lineNum))
+	fmt.Printf("\033[48;5;235m")
+	for i := 0; i < w.MaxCols; i++ {
+		fmt.Printf(" ")
+	}
+	fmt.Printf("\033[m")
+	w.MoveCursorPos(1, uint16(lineNum))
+	fmt.Printf("\033[1m%4d\033[m  \033[48;5;235m%s\033[m", lineNum, rowData)
+}
+
+func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
+	w.MoveCursorPos(1, uint16(lineNum))
+	fmt.Printf("%4d  %s", lineNum, rowData)
 }
 
 func (w *Window) Draw() {
@@ -67,9 +83,9 @@ func (w *Window) Draw() {
 			break
 		}
 		if pNode == w.Editor.CurrentNode {
-			fmt.Printf("> %s\n", string(pNode.Row.GetAll()))
+			w.DrawFocusRow(i, string(pNode.Row.GetAll()))
 		} else {
-			fmt.Printf("  %s\n", string(pNode.Row.GetAll()))
+			w.DrawUnfocusRow(i, string(pNode.Row.GetAll()))
 		}
 	}
 }
@@ -77,11 +93,13 @@ func (w *Window) Draw() {
 func (w *Window) UpdateStatusBar() {
 	w.MoveCursorPos(1, uint16(w.MaxRows))
 	w.ClearLine()
-	tmp := fmt.Sprintf("\033[44m\033[1m %s\033[m\033[44m | Ln %d, Col %d | Tab Size: %d", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row, w.Editor.TabSize)
-	fmt.Printf(tmp)
-	for i := 0; i < w.MaxCols-len(tmp); i++ {
+	fmt.Print("\033[48;5;25m")
+	for i := 0; i < w.MaxCols; i++ {
 		fmt.Print(" ")
 	}
+	fmt.Print("\033[m")
+	w.MoveCursorPos(1, uint16(w.MaxRows))
+	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m | Ln %d, Col %d | Tab Size: %d", w.Editor.FilePath, w.Editor.Cursor.Row, w.Editor.Cursor.Col, w.Editor.TabSize)
 	fmt.Print("\033[m")
 }
 
@@ -89,5 +107,10 @@ func (w *Window) Reflesh() {
 	w.Clear()
 	w.Draw()
 	w.UpdateStatusBar()
-	w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+	w.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
+}
+
+func (w *Window) RefleshCursorOnly() {
+	w.UpdateStatusBar()
+	w.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
 }
