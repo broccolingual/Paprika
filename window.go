@@ -38,11 +38,11 @@ func (w *Window) UpdateWinSize() {
 	w.MaxCols = int(ws.Col)
 }
 
-func CursorOff() {
+func DisableCursor() {
 	syscall.Write(0, []byte("\033[?25l"))
 }
 
-func CursorOn() {
+func EnableCursor() {
 	syscall.Write(0, []byte("\033[?25h"))
 }
 

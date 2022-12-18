@@ -7,6 +7,19 @@ import (
 	"unsafe"
 )
 
+type UnixTerm interface {
+	EnableCursor()
+	DisableCursor()
+	ScreenClear()
+	LineClear()
+	InitCursorPos()
+	MoveCursorPos()
+	EnableASB()
+	DisableASB()
+}
+
+type _UnixTerm struct{}
+
 // Define termios(unix) object
 type termios struct {
 	Iflag  uint32

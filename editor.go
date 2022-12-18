@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const LINE_BUF_MAX = 255
+
 type Editor struct {
 	FilePath    string
 	Cursor      *Cursor
@@ -76,7 +78,7 @@ func (e *Editor) LoadFile() {
 	}
 
 	rowsCnt := 0
-	reader := bufio.NewReaderSize(fp, 512)
+	reader := bufio.NewReaderSize(fp, LINE_BUF_MAX)
 	for {
 		line, err := reader.ReadString(byte('\n'))                    // '\n'で分割
 		replacedStr := strings.ReplaceAll(string(line), "\t", tabStr) // タブをスペースに変換
@@ -95,7 +97,7 @@ func (e *Editor) LoadFile() {
 			}
 		}
 
-		e.Root.Prev.Append(replacedRune, 512)
+		e.Root.Prev.Append(replacedRune, LINE_BUF_MAX)
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -139,11 +141,12 @@ func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
 		}
 		cnt++
 		buf += fmt.Sprintf("%s", string(tmp.Row.GetAll()))
-		if nl == NL_LF {
-			buf += "\n"
-		} else if nl == NL_CRLF {
+		switch nl {
+		case NL_CRLF:
 			buf += "\r\n"
-		} else {
+		case NL_LF:
+			buf += "\n"
+		default:
 			buf += "\n"
 		}
 		tmp = tmp.Next

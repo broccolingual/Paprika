@@ -83,7 +83,7 @@ func (w *Window) detectKeys() {
 	w.Reflesh()
 	for {
 		r := <-w.KeyChan
-		CursorOff()
+		DisableCursor()
 		switch r {
 		case CTRL_A:
 		case CTRL_B:
@@ -170,6 +170,6 @@ func (w *Window) detectKeys() {
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		}
-		CursorOn()
+		EnableCursor()
 	}
 }
