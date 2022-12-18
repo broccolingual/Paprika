@@ -83,91 +83,95 @@ func (w *Window) detectKeys() {
 	w.Reflesh()
 	for {
 		r := <-w.KeyChan
-		switch r {
-		case CTRL_A:
-		case CTRL_B:
-		case CTRL_C:
-		case CTRL_D:
-		case CTRL_E:
-		case CTRL_F:
-		case CTRL_G:
-		case CTRL_H:
-		case CTRL_I:
-		case CTRL_J:
-		case CTRL_K:
-		case CTRL_L:
-		case CTRL_M: // Enter
-			w.Editor.Cursor.Col += 1
-			// TODO: NEW LINE
-		case CTRL_N:
-		case CTRL_O:
-		case CTRL_P:
-		case CTRL_Q:
-		case CTRL_R:
-		case CTRL_S: // Save
-			_ = w.Editor.SaveNew("./bin/Makefile.bak", NL_CRLF)
-		case CTRL_T:
-		case CTRL_U:
-		case CTRL_V:
-		case CTRL_W:
-		case CTRL_X: // Exit
-			return
-		case CTRL_Y:
-		case CTRL_Z:
-		case ESC:
-			return
-		case 32: // Space
-			w.Editor.Cursor.Col += 1
-			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
-			w.Reflesh()
-		case 127: // Backspace
-			if w.Editor.Cursor.Col > 1 {
-				w.Editor.Cursor.Col -= 1
-				w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Col - 1))
-			}
-			w.ClearLine()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			w.RefleshCursorOnly()
-		case KEY_UP:
-			w.ClearLine()
-			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			if w.Editor.Cursor.Row > 1 {
-				w.Editor.Cursor.Row -= 1
-				w.Editor.Cursor.Col = 1
-				w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
-			}
-			w.MoveCursorPos(1, w.Editor.Cursor.Row)
-			w.ClearLine()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			w.RefleshCursorOnly()
-		case KEY_DOWN:
-			w.ClearLine()
-			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			if w.Editor.Cursor.Row <= w.Editor.Rows {
-				w.Editor.Cursor.Row += 1
-				w.Editor.Cursor.Col = 1
-				w.Editor.CurrentNode = w.Editor.CurrentNode.Next
-			}
-			w.MoveCursorPos(1, w.Editor.Cursor.Row)
-			w.ClearLine()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			w.RefleshCursorOnly()
-		case KEY_RIGHT:
-			if w.Editor.Cursor.Col <= uint16(w.Editor.CurrentNode.Row.GetSize()) {
+		func() {
+			CursorOff()
+			defer CursorOn()
+			switch r {
+			case CTRL_A:
+			case CTRL_B:
+			case CTRL_C:
+			case CTRL_D:
+			case CTRL_E:
+			case CTRL_F:
+			case CTRL_G:
+			case CTRL_H:
+			case CTRL_I:
+			case CTRL_J:
+			case CTRL_K:
+			case CTRL_L:
+			case CTRL_M: // Enter
 				w.Editor.Cursor.Col += 1
+				// TODO: NEW LINE
+			case CTRL_N:
+			case CTRL_O:
+			case CTRL_P:
+			case CTRL_Q:
+			case CTRL_R:
+			case CTRL_S: // Save
+				_ = w.Editor.SaveNew("./bin/Makefile.bak", NL_CRLF)
+			case CTRL_T:
+			case CTRL_U:
+			case CTRL_V:
+			case CTRL_W:
+			case CTRL_X: // Exit
+				return
+			case CTRL_Y:
+			case CTRL_Z:
+			case ESC:
+				return
+			case 32: // Space
+				w.Editor.Cursor.Col += 1
+				w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
+				w.Reflesh()
+			case 127: // Backspace
+				if w.Editor.Cursor.Col > 1 {
+					w.Editor.Cursor.Col -= 1
+					w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Col - 1))
+				}
+				w.ClearLine()
+				w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				w.RefleshCursorOnly()
+			case KEY_UP:
+				w.ClearLine()
+				w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				if w.Editor.Cursor.Row > 1 {
+					w.Editor.Cursor.Row -= 1
+					w.Editor.Cursor.Col = 1
+					w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
+				}
+				w.MoveCursorPos(1, w.Editor.Cursor.Row)
+				w.ClearLine()
+				w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				w.RefleshCursorOnly()
+			case KEY_DOWN:
+				w.ClearLine()
+				w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				if w.Editor.Cursor.Row <= w.Editor.Rows {
+					w.Editor.Cursor.Row += 1
+					w.Editor.Cursor.Col = 1
+					w.Editor.CurrentNode = w.Editor.CurrentNode.Next
+				}
+				w.MoveCursorPos(1, w.Editor.Cursor.Row)
+				w.ClearLine()
+				w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				w.RefleshCursorOnly()
+			case KEY_RIGHT:
+				if w.Editor.Cursor.Col <= uint16(w.Editor.CurrentNode.Row.GetSize()) {
+					w.Editor.Cursor.Col += 1
+				}
+				w.RefleshCursorOnly()
+			case KEY_LEFT:
+				if w.Editor.Cursor.Col > 1 {
+					w.Editor.Cursor.Col -= 1
+				}
+				w.RefleshCursorOnly()
+			default:
+				w.Editor.Cursor.Col += 1
+				w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
+				w.ClearLine()
+				w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+				w.RefleshCursorOnly()
 			}
-			w.RefleshCursorOnly()
-		case KEY_LEFT:
-			if w.Editor.Cursor.Col > 1 {
-				w.Editor.Cursor.Col -= 1
-			}
-			w.RefleshCursorOnly()
-		default:
-			w.Editor.Cursor.Col += 1
-			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
-			w.ClearLine()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			w.RefleshCursorOnly()
-		}
+		}()
 	}
 }
