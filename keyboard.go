@@ -98,6 +98,7 @@ func (w *Window) switchKeys() {
 		case CTRL_L:
 		case CTRL_M: // Enter
 			w.Editor.Cursor.Col += 1
+			// TODO: NEW LINE
 		case CTRL_N:
 		case CTRL_O:
 		case CTRL_P:

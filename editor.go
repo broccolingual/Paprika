@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type Editor struct {
@@ -12,6 +13,7 @@ type Editor struct {
 	Cursor      *Cursor
 	Root        *RowNode
 	CurrentNode *RowNode
+	TabSize     uint8
 }
 
 type Cursor struct {
@@ -26,12 +28,13 @@ func NewCursor() (cursor *Cursor) {
 	return
 }
 
-func NewEditor(filePath string) (editor *Editor) {
+func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
 	editor.Cursor = NewCursor()
 	editor.Root = NewRowsList()
 	editor.CurrentNode = editor.Root
+	editor.TabSize = tabSize
 	return
 }
 
@@ -52,10 +55,17 @@ func (e *Editor) LoadFile() {
 	}
 	defer fp.Close()
 
+	// conv tab to string
+	var tabStr string
+	for i := 0; i < int(e.TabSize); i++ {
+		tabStr += " "
+	}
+
 	reader := bufio.NewReaderSize(fp, 512)
 	for {
 		line, _, err := reader.ReadLine()
-		e.Root.Prev.Append([]rune(string(line)), 512)
+
+		e.Root.Prev.Append([]rune(strings.ReplaceAll(string(line), "\t", tabStr)), 512)
 		if err == io.EOF {
 			break
 		} else if err != nil {

@@ -24,7 +24,7 @@ type WinSize struct {
 
 func NewWindow(filePath string) *Window {
 	w := new(Window)
-	w.Editor = NewEditor(filePath)
+	w.Editor = NewEditor(filePath, 4)
 	w.KeyChan = make(chan rune)
 	w.UpdateWinSize()
 	return w
@@ -77,7 +77,7 @@ func (w *Window) Draw() {
 func (w *Window) UpdateStatusBar() {
 	w.MoveCursorPos(1, uint16(w.MaxRows))
 	w.ClearLine()
-	tmp := fmt.Sprintf("\033[7m%s | Ln %d, Col %d", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+	tmp := fmt.Sprintf("\033[44m\033[1m %s\033[m\033[44m | Ln %d, Col %d | Tab Size: %d", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row, w.Editor.TabSize)
 	fmt.Printf(tmp)
 	for i := 0; i < w.MaxCols-len(tmp); i++ {
 		fmt.Print(" ")
