@@ -80,8 +80,7 @@ func (w *Window) readKeys() {
 }
 
 func (w *Window) switchKeys() {
-	w.Draw()
-	w.UpdateStatusBar()
+	w.Reflesh()
 	for {
 		r := <-w.KeyChan
 		switch r {
@@ -119,60 +118,39 @@ func (w *Window) switchKeys() {
 		case 32: // Space
 			w.Editor.Cursor.Row += 1
 			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Row-2), r)
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		case 127: // Backspace
 			if w.Editor.Cursor.Row > 1 {
 				w.Editor.Cursor.Row -= 1
 				w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Row - 1))
 			}
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		case KEY_UP:
 			if w.Editor.Cursor.Col > 1 {
 				w.Editor.Cursor.Col -= 1
 				w.Editor.Cursor.Row = 1
 				w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
 			}
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		case KEY_DOWN:
 			w.Editor.Cursor.Col += 1
 			w.Editor.Cursor.Row = 1
 			w.Editor.CurrentNode = w.Editor.CurrentNode.Next
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		case KEY_RIGHT:
 			if w.Editor.Cursor.Row <= uint16(w.Editor.CurrentNode.Row.GetSize()) {
 				w.Editor.Cursor.Row += 1
 			}
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		case KEY_LEFT:
 			if w.Editor.Cursor.Row > 1 {
 				w.Editor.Cursor.Row -= 1
 			}
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		default:
 			w.Editor.Cursor.Row += 1
 			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Row-2), r)
-			w.Clear()
-			w.Draw()
-			w.UpdateStatusBar()
-			w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
+			w.Reflesh()
 		}
 	}
 }

@@ -77,5 +77,17 @@ func (w *Window) Draw() {
 func (w *Window) UpdateStatusBar() {
 	w.MoveCursorPos(1, uint16(w.MaxRows))
 	w.ClearLine()
-	fmt.Printf("\033[7m> %s | Ln %d, Col %d\033[m", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+	tmp := fmt.Sprintf("\033[7m%s | Ln %d, Col %d", w.Editor.FilePath, w.Editor.Cursor.Col, w.Editor.Cursor.Row)
+	fmt.Printf(tmp)
+	for i := 0; i < w.MaxCols-len(tmp); i++ {
+		fmt.Print(" ")
+	}
+	fmt.Print("\033[m")
+}
+
+func (w *Window) Reflesh() {
+	w.Clear()
+	w.Draw()
+	w.UpdateStatusBar()
+	w.MoveCursorPos(w.Editor.Cursor.Row+2, w.Editor.Cursor.Col)
 }
