@@ -143,9 +143,11 @@ func (w *Window) detectKeys() {
 		case KEY_DOWN:
 			w.ClearLine()
 			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			w.Editor.Cursor.Row += 1
-			w.Editor.Cursor.Col = 1
-			w.Editor.CurrentNode = w.Editor.CurrentNode.Next
+			if w.Editor.Cursor.Row <= w.Editor.Rows {
+				w.Editor.Cursor.Row += 1
+				w.Editor.Cursor.Col = 1
+				w.Editor.CurrentNode = w.Editor.CurrentNode.Next
+			}
 			w.MoveCursorPos(1, w.Editor.Cursor.Row)
 			w.ClearLine()
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))

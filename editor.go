@@ -14,6 +14,7 @@ type Editor struct {
 	Root        *RowNode
 	CurrentNode *RowNode
 	TabSize     uint8
+	Rows        uint16
 }
 
 type Cursor struct {
@@ -35,6 +36,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.Root = NewRowsList()
 	editor.CurrentNode = editor.Root
 	editor.TabSize = tabSize
+	editor.Rows = 0
 	return
 }
 
@@ -61,9 +63,10 @@ func (e *Editor) LoadFile() {
 		tabStr += " "
 	}
 
+	rowsCnt := 0
 	reader := bufio.NewReaderSize(fp, 512)
 	for {
-		line, _, err := reader.ReadLine()
+		line, err := reader.ReadString(byte('\n'))
 
 		e.Root.Prev.Append([]rune(strings.ReplaceAll(string(line), "\t", tabStr)), 512)
 		if err == io.EOF {
@@ -71,7 +74,9 @@ func (e *Editor) LoadFile() {
 		} else if err != nil {
 			panic(err)
 		}
+		rowsCnt++
 	}
+	e.Rows = uint16(rowsCnt)
 }
 
 func (e *Editor) SaveOverwrite(nl int) (saveBytes int) {
