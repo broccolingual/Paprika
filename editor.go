@@ -14,6 +14,7 @@ type Editor struct {
 	Root        *RowNode
 	CurrentNode *RowNode
 	TabSize     uint8
+	NL          int
 	Rows        uint16
 }
 
@@ -36,8 +37,19 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.Root = NewRowsList()
 	editor.CurrentNode = editor.Root
 	editor.TabSize = tabSize
+	editor.NL = -1
 	editor.Rows = 0
 	return
+}
+
+func GetNL(row []rune) int {
+	if row[len(row)-1] == rune('\n') {
+		if row[len(row)-2] == rune('\r') {
+			return NL_CRLF
+		}
+		return NL_LF
+	}
+	return -1
 }
 
 func (e *Editor) MoveNextRow() *RowNode {
@@ -66,9 +78,24 @@ func (e *Editor) LoadFile() {
 	rowsCnt := 0
 	reader := bufio.NewReaderSize(fp, 512)
 	for {
-		line, err := reader.ReadString(byte('\n'))
+		line, err := reader.ReadString(byte('\n'))                    // '\n'で分割
+		replacedStr := strings.ReplaceAll(string(line), "\t", tabStr) // タブをスペースに変換
+		replacedRune := []rune(replacedStr)
+		if rowsCnt == 0 { // 改行文字の判定
+			e.NL = GetNL(replacedRune)
+		}
+		switch e.NL { // 改行文字の削除
+		case NL_CRLF:
+			if len(replacedRune) >= 2 {
+				replacedRune = replacedRune[:len(replacedRune)-2]
+			}
+		case NL_LF:
+			if len(replacedRune) >= 1 {
+				replacedRune = replacedRune[:len(replacedRune)-1]
+			}
+		}
 
-		e.Root.Prev.Append([]rune(strings.ReplaceAll(string(line), "\t", tabStr)), 512)
+		e.Root.Prev.Append(replacedRune, 512)
 		if err == io.EOF {
 			break
 		} else if err != nil {

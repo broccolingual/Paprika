@@ -105,9 +105,18 @@ func (w *Window) UpdateStatusBar() {
 	for i := 0; i < w.MaxCols; i++ {
 		fmt.Print(" ")
 	}
+	var nl string
+	switch w.Editor.NL {
+	case NL_CRLF:
+		nl = "CRLF"
+	case NL_LF:
+		nl = "LF"
+	default:
+		nl = "Unknown"
+	}
 	fmt.Print("\033[m")
 	w.MoveCursorPos(1, uint16(w.MaxRows))
-	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m | Ln %d, Col %d | Tab Size: %d", w.Editor.FilePath, w.Editor.Cursor.Row, w.Editor.Cursor.Col, w.Editor.TabSize)
+	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m | Ln %d, Col %d | Tab Size: %d | %s", w.Editor.FilePath, w.Editor.Cursor.Row, w.Editor.Cursor.Col, w.Editor.TabSize, nl)
 	fmt.Print("\033[m")
 }
 

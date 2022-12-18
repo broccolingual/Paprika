@@ -8,6 +8,7 @@ func main() {
 	tty.EnableRawMode()
 	defer tty.DisableRawMode()
 	defer DisableASB()
+	defer CursorOn()
 
 	window := NewWindow(os.Args[1])
 	window.Editor.LoadFile()
