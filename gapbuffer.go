@@ -4,8 +4,8 @@ type GapBuffer interface {
 	GetSize() int
 	Get(idx int) rune
 	GetAll() []rune
-	Insert(idx int, ch rune)
-	Erase(idx int)
+	Insert(idx int, ch rune) bool
+	Erase(idx int) bool
 }
 
 type gapBuffer struct {
@@ -69,20 +69,22 @@ func (gBuf *gapBuffer) GetAll() []rune {
 	return tmp
 }
 
-func (gBuf *gapBuffer) Insert(idx int, ch rune) {
+func (gBuf *gapBuffer) Insert(idx int, ch rune) bool {
 	if idx < 0 || idx > gBuf.size {
-		return
+		return false
 	}
 	gBuf.moveGap(idx)
 	gBuf.buf[gBuf.gapIdx] = ch
 	gBuf.gapIdx++
 	gBuf.gapSize--
+	return true
 }
 
-func (gBuf *gapBuffer) Erase(idx int) {
+func (gBuf *gapBuffer) Erase(idx int) bool {
 	if idx < 0 || idx > gBuf.size {
-		return
+		return false
 	}
 	gBuf.moveGap(idx)
 	gBuf.gapSize++
+	return true
 }

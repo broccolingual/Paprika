@@ -46,7 +46,8 @@ func (e *RowNode) Insert(data []rune, bufSize int) *RowNode {
 	return _new
 }
 
-func (e *RowNode) Delete() {
+func (e *RowNode) Delete() *RowNode {
 	e.Prev.Next = e.Next
 	e.Next.Prev = e.Prev
+	return e.Prev
 }

@@ -92,7 +92,7 @@ func (w *Window) detectKeys() {
 			// TODO: Backspaceの挙動
 			cTab.CurrentNode.Delete()
 			if cTab.Cursor.Row > 1 {
-				cTab.Cursor.Row -= 1
+				cTab.Cursor.Row--
 				cTab.MovePrevRow()
 			} else {
 				cTab.MoveNextRow()
@@ -112,9 +112,28 @@ func (w *Window) detectKeys() {
 		case CTRL_K:
 		case CTRL_L:
 		case CTRL_M: // Enter
-			// TODO: 改行の挙動
-			cTab.CurrentNode = cTab.CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
-			cTab.Cursor.Row += 1
+			if cTab.Cursor.Col != 1 {
+				cTab.CurrentNode = cTab.CurrentNode.Insert(cTab.CurrentNode.Row.GetAll(), LINE_BUF_MAX)
+				cTab.MovePrevRow()
+				tmp := cTab.CurrentNode.Row.GetSize() + 1
+				for i := int(cTab.Cursor.Col); i < tmp; i++ {
+					cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col) - 1)
+				}
+				cTab.MoveNextRow()
+				for i := 1; i < int(cTab.Cursor.Col); i++ {
+					cTab.CurrentNode.Row.Erase(0)
+				}
+				cTab.Cursor.Col = 1
+				cTab.Cursor.Row++
+			} else {
+				if cTab.CurrentNode.Row.GetSize() != 0 {
+					cTab.MovePrevRow()
+					cTab.CurrentNode = cTab.CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
+				} else {
+					cTab.CurrentNode = cTab.CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
+					cTab.Cursor.Row++
+				}
+			}
 			cTab.Rows++
 			cTab.SaveFlag = false
 			w.Reflesh()
@@ -147,24 +166,31 @@ func (w *Window) detectKeys() {
 		case ESC:
 			return
 		case 32: // Space
-			cTab.Cursor.Col += 1
+			cTab.Cursor.Col++
 			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
 			cTab.SaveFlag = false
 			w.Reflesh()
 		case 127: // Backspace
-			if cTab.Cursor.Col > 1 {
-				cTab.Cursor.Col -= 1
+			// TODO: Backspaceの挙動実装, 1行目の時問題アリ
+			if cTab.Cursor.Col != 1 {
+				cTab.Cursor.Col--
 				cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col - 1))
+				w.Term.LineClear()
+				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+				cTab.SaveFlag = false
+				w.RefleshCursorOnly()
+			} else {
+				cTab.Cursor.Row--
+				cTab.CurrentNode = cTab.CurrentNode.Delete()
+				cTab.Cursor.Col = uint16(cTab.CurrentNode.Row.GetSize() + 1)
+				cTab.SaveFlag = false
+				w.Reflesh()
 			}
-			w.Term.LineClear()
-			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
-			cTab.SaveFlag = false
-			w.RefleshCursorOnly()
 		case KEY_UP:
 			w.Term.LineClear()
 			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			if cTab.Cursor.Row > 1 {
-				cTab.Cursor.Row -= 1
+				cTab.Cursor.Row--
 				cTab.Cursor.Col = 1
 				cTab.MovePrevRow()
 			}
@@ -176,7 +202,7 @@ func (w *Window) detectKeys() {
 			w.Term.LineClear()
 			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			if cTab.Cursor.Row <= cTab.Rows {
-				cTab.Cursor.Row += 1
+				cTab.Cursor.Row++
 				cTab.Cursor.Col = 1
 				cTab.MoveNextRow()
 			}
@@ -186,17 +212,42 @@ func (w *Window) detectKeys() {
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
 			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Row.GetSize()) {
-				cTab.Cursor.Col += 1
+				cTab.Cursor.Col++
 			}
 			w.RefleshCursorOnly()
 		case KEY_LEFT:
 			if cTab.Cursor.Col > 1 {
-				cTab.Cursor.Col -= 1
+				cTab.Cursor.Col--
 			}
 			w.RefleshCursorOnly()
 		default:
-			cTab.Cursor.Col += 1
+			cTab.Cursor.Col++
 			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
+			switch r { // Complemention
+			case rune('('):
+				cTab.Cursor.Col++
+				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune(')'))
+				cTab.Cursor.Col--
+			case rune('{'):
+				cTab.Cursor.Col++
+				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('}'))
+				cTab.Cursor.Col--
+			case rune('['):
+				cTab.Cursor.Col++
+				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune(']'))
+				cTab.Cursor.Col--
+			case rune('\''):
+				cTab.Cursor.Col++
+				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('\''))
+				cTab.Cursor.Col--
+			case rune('"'):
+				cTab.Cursor.Col++
+				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('"'))
+				cTab.Cursor.Col--
+			case rune('\t'):
+				// Tab保管の実装
+			default:
+			}
 			w.Term.LineClear()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			cTab.SaveFlag = false
