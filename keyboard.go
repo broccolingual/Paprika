@@ -87,7 +87,15 @@ func (w *Window) detectKeys() {
 		r := <-w.KeyChan
 		w.Term.DisableCursor()
 		switch r {
-		case CTRL_A:
+		case CTRL_A: // For test
+			w.Tabs[w.TabIdx].CurrentNode.Delete()
+			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
+				w.Tabs[w.TabIdx].Cursor.Row -= 1
+				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Prev
+			} else {
+				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Next
+			}
+			w.Reflesh()
 		case CTRL_B:
 		case CTRL_C:
 		case CTRL_D:
@@ -100,8 +108,10 @@ func (w *Window) detectKeys() {
 		case CTRL_K:
 		case CTRL_L:
 		case CTRL_M: // Enter
-			w.Tabs[w.TabIdx].Cursor.Col += 1
 			// TODO: NEW LINE
+			w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
+			w.Tabs[w.TabIdx].Cursor.Row += 1
+			w.Reflesh()
 		case CTRL_N:
 		case CTRL_O:
 		case CTRL_P:

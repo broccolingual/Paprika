@@ -36,10 +36,15 @@ func (e *RowNode) Append(data []rune, bufSize int) {
 	_new.Row = NewGapBuffer(data, bufSize)
 }
 
-func (e *RowNode) Insert(data []rune, bufSize int) {
+func (e *RowNode) Insert(data []rune, bufSize int) *RowNode {
 	_new := new(RowNode)
-	_new.Prev = e.Prev
-	_new.Next = e
-	e.Prev = _new
+	_new.Next = e.Next
+	e.Next = _new
+	_new.Prev = e
 	_new.Row = NewGapBuffer(data, bufSize)
+	return _new
+}
+
+func (e *RowNode) Delete() {
+	e.Prev.Next = e.Next
 }
