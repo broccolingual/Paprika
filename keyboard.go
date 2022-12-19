@@ -88,18 +88,7 @@ func (w *Window) detectKeys() {
 		cTab := w.Tabs[w.TabIdx] // Current Tab
 		w.Term.DisableCursor()
 		switch r {
-		case CTRL_A: // For test
-			// TODO: Backspaceの挙動
-			cTab.CurrentNode.Delete()
-			if cTab.Cursor.Row > 1 {
-				cTab.Cursor.Row--
-				cTab.MovePrevRow()
-			} else {
-				cTab.MoveNextRow()
-			}
-			cTab.Rows--
-			cTab.SaveFlag = false
-			w.Reflesh()
+		case CTRL_A:
 		case CTRL_B:
 		case CTRL_C: // Copy
 		case CTRL_D:
@@ -171,7 +160,6 @@ func (w *Window) detectKeys() {
 			cTab.SaveFlag = false
 			w.Reflesh()
 		case 127: // Backspace
-			// TODO: Backspaceの挙動実装, 1行目の時問題アリ
 			if cTab.Cursor.Col != 1 {
 				cTab.Cursor.Col--
 				cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col - 1))
@@ -180,21 +168,23 @@ func (w *Window) detectKeys() {
 				cTab.SaveFlag = false
 				w.RefleshCursorOnly()
 			} else {
-				var tmp []rune
-				if cTab.CurrentNode.Row.GetSize() != 0 {
-					tmp = cTab.CurrentNode.Row.GetAll()
+				if cTab.Cursor.Row != 1 {
+					var tmp []rune
+					if cTab.CurrentNode.Row.GetSize() != 0 {
+						tmp = cTab.CurrentNode.Row.GetAll()
+					}
+					cTab.Cursor.Row--
+					cTab.CurrentNode = cTab.CurrentNode.Delete()
+					origCursorPos := uint16(cTab.CurrentNode.Row.GetSize() + 1)
+					cTab.Cursor.Col = origCursorPos
+					for _, ch := range tmp {
+						cTab.Cursor.Col++
+						cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), ch)
+					}
+					cTab.Cursor.Col = origCursorPos
+					cTab.SaveFlag = false
+					w.Reflesh()
 				}
-				cTab.Cursor.Row--
-				cTab.CurrentNode = cTab.CurrentNode.Delete()
-				origCursorPos := uint16(cTab.CurrentNode.Row.GetSize() + 1)
-				cTab.Cursor.Col = origCursorPos
-				for _, ch := range tmp {
-					cTab.Cursor.Col++
-					cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), ch)
-				}
-				cTab.Cursor.Col = origCursorPos
-				cTab.SaveFlag = false
-				w.Reflesh()
 			}
 		case KEY_UP:
 			w.Term.LineClear()
