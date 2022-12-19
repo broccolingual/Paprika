@@ -106,7 +106,7 @@ func (e *Editor) LoadFile() {
 		}
 		rowsCnt++
 	}
-	e.CurrentNode = e.CurrentNode.Next
+	e.MoveNextRow()
 	e.Rows = uint16(rowsCnt)
 }
 

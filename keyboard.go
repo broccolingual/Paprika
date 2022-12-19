@@ -91,13 +91,13 @@ func (w *Window) detectKeys() {
 			w.Tabs[w.TabIdx].CurrentNode.Delete()
 			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
 				w.Tabs[w.TabIdx].Cursor.Row -= 1
-				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Prev
+				w.Tabs[w.TabIdx].MovePrevRow()
 			} else {
-				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Next
+				w.Tabs[w.TabIdx].MoveNextRow()
 			}
 			w.Reflesh()
 		case CTRL_B:
-		case CTRL_C:
+		case CTRL_C: // Copy
 		case CTRL_D:
 		case CTRL_E:
 		case CTRL_F:
@@ -108,7 +108,6 @@ func (w *Window) detectKeys() {
 		case CTRL_K:
 		case CTRL_L:
 		case CTRL_M: // Enter
-			// TODO: NEW LINE
 			w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
 			w.Tabs[w.TabIdx].Cursor.Row += 1
 			w.Reflesh()
@@ -125,7 +124,7 @@ func (w *Window) detectKeys() {
 			w.NextTab()
 			w.Reflesh()
 		case CTRL_U:
-		case CTRL_V:
+		case CTRL_V: // Paste
 		case CTRL_W:
 		case CTRL_X: // Exit
 			return
@@ -155,7 +154,7 @@ func (w *Window) detectKeys() {
 			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
 				w.Tabs[w.TabIdx].Cursor.Row -= 1
 				w.Tabs[w.TabIdx].Cursor.Col = 1
-				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Prev
+				w.Tabs[w.TabIdx].MovePrevRow()
 			}
 			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
 			w.Term.LineClear()
@@ -167,7 +166,7 @@ func (w *Window) detectKeys() {
 			if w.Tabs[w.TabIdx].Cursor.Row <= w.Tabs[w.TabIdx].Rows {
 				w.Tabs[w.TabIdx].Cursor.Row += 1
 				w.Tabs[w.TabIdx].Cursor.Col = 1
-				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Next
+				w.Tabs[w.TabIdx].MoveNextRow()
 			}
 			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
 			w.Term.LineClear()
