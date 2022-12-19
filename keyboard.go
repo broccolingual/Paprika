@@ -180,9 +180,19 @@ func (w *Window) detectKeys() {
 				cTab.SaveFlag = false
 				w.RefleshCursorOnly()
 			} else {
+				var tmp []rune
+				if cTab.CurrentNode.Row.GetSize() != 0 {
+					tmp = cTab.CurrentNode.Row.GetAll()
+				}
 				cTab.Cursor.Row--
 				cTab.CurrentNode = cTab.CurrentNode.Delete()
-				cTab.Cursor.Col = uint16(cTab.CurrentNode.Row.GetSize() + 1)
+				origCursorPos := uint16(cTab.CurrentNode.Row.GetSize() + 1)
+				cTab.Cursor.Col = origCursorPos
+				for _, ch := range tmp {
+					cTab.Cursor.Col++
+					cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), ch)
+				}
+				cTab.Cursor.Col = origCursorPos
 				cTab.SaveFlag = false
 				w.Reflesh()
 			}
@@ -245,7 +255,7 @@ func (w *Window) detectKeys() {
 				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('"'))
 				cTab.Cursor.Col--
 			case rune('\t'):
-				// Tab保管の実装
+				// Tab補完の実装
 			default:
 			}
 			w.Term.LineClear()
