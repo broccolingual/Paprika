@@ -16,7 +16,6 @@ func main() {
 
 	for _, tab := range window.Tabs {
 		tab.LoadFile()
-		tab.CurrentNode = tab.CurrentNode.Next
 	}
 
 	go window.readKeys()

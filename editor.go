@@ -86,6 +86,7 @@ func (e *Editor) LoadFile() {
 		if rowsCnt == 0 { // 改行文字の判定
 			e.NL = GetNL(replacedRune)
 		}
+		// TODO: 改行文字が混在している時の対応
 		switch e.NL { // 改行文字の削除
 		case NL_CRLF:
 			if len(replacedRune) >= 2 {
@@ -105,6 +106,7 @@ func (e *Editor) LoadFile() {
 		}
 		rowsCnt++
 	}
+	e.CurrentNode = e.CurrentNode.Next
 	e.Rows = uint16(rowsCnt)
 }
 
