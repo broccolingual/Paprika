@@ -83,7 +83,7 @@ func (w *Window) detectKeys() {
 	w.Reflesh()
 	for {
 		r := <-w.KeyChan
-		DisableCursor()
+		w.Term.DisableCursor()
 		switch r {
 		case CTRL_A:
 		case CTRL_B:
@@ -126,31 +126,31 @@ func (w *Window) detectKeys() {
 				w.Editor.Cursor.Col -= 1
 				w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Col - 1))
 			}
-			w.ClearLine()
+			w.Term.LineClear()
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_UP:
-			w.ClearLine()
+			w.Term.LineClear()
 			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			if w.Editor.Cursor.Row > 1 {
 				w.Editor.Cursor.Row -= 1
 				w.Editor.Cursor.Col = 1
 				w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
 			}
-			w.MoveCursorPos(1, w.Editor.Cursor.Row)
-			w.ClearLine()
+			w.Term.MoveCursorPos(1, w.Editor.Cursor.Row)
+			w.Term.LineClear()
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_DOWN:
-			w.ClearLine()
+			w.Term.LineClear()
 			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			if w.Editor.Cursor.Row <= w.Editor.Rows {
 				w.Editor.Cursor.Row += 1
 				w.Editor.Cursor.Col = 1
 				w.Editor.CurrentNode = w.Editor.CurrentNode.Next
 			}
-			w.MoveCursorPos(1, w.Editor.Cursor.Row)
-			w.ClearLine()
+			w.Term.MoveCursorPos(1, w.Editor.Cursor.Row)
+			w.Term.LineClear()
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
@@ -166,10 +166,10 @@ func (w *Window) detectKeys() {
 		default:
 			w.Editor.Cursor.Col += 1
 			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
-			w.ClearLine()
+			w.Term.LineClear()
 			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		}
-		EnableCursor()
+		w.Term.EnableCursor()
 	}
 }

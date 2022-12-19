@@ -8,6 +8,7 @@ import (
 )
 
 type Window struct {
+	Term    UnixTerm
 	KeyChan chan rune
 	Editor  *Editor
 	MaxRows int
@@ -24,6 +25,7 @@ type WinSize struct {
 
 func NewWindow(filePath string) *Window {
 	w := new(Window)
+	w.Term = NewUnixTerm()
 	w.Editor = NewEditor(filePath, 4)
 	w.KeyChan = make(chan rune)
 	w.UpdateWinSize()
@@ -38,49 +40,24 @@ func (w *Window) UpdateWinSize() {
 	w.MaxCols = int(ws.Col)
 }
 
-func DisableCursor() {
-	syscall.Write(0, []byte("\033[?25l"))
-}
-
-func EnableCursor() {
-	syscall.Write(0, []byte("\033[?25h"))
-}
-
-func (w *Window) Clear() {
-	syscall.Write(0, []byte("\033[2J"))
-}
-
-func (w *Window) ClearLine() {
-	syscall.Write(0, []byte("\033[2K"))
-}
-
-func (w *Window) InitCursorPos() {
-	syscall.Write(0, []byte("\033[1;1H"))
-}
-
-// row: 1~, col: 1~
-func (w *Window) MoveCursorPos(col uint16, row uint16) {
-	syscall.Write(0, []byte(fmt.Sprintf("\033[%d;%dH", row, col)))
-}
-
 func (w *Window) DrawFocusRow(lineNum int, rowData string) {
-	w.MoveCursorPos(1, uint16(lineNum))
+	w.Term.MoveCursorPos(1, uint16(lineNum))
 	fmt.Printf("\033[48;5;235m")
 	for i := 0; i < w.MaxCols; i++ {
 		fmt.Printf(" ")
 	}
 	fmt.Printf("\033[m")
-	w.MoveCursorPos(1, uint16(lineNum))
+	w.Term.MoveCursorPos(1, uint16(lineNum))
 	fmt.Printf("\033[1m%4d\033[m  \033[48;5;235m%s\033[m", lineNum, rowData)
 }
 
 func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
-	w.MoveCursorPos(1, uint16(lineNum))
+	w.Term.MoveCursorPos(1, uint16(lineNum))
 	fmt.Printf("%4d  %s", lineNum, rowData)
 }
 
-func (w *Window) Draw() {
-	w.InitCursorPos()
+func (w *Window) DrawAll() {
+	w.Term.InitCursorPos()
 	pNode := w.Editor.Root
 	if pNode.Prev == pNode.Next {
 		return
@@ -99,8 +76,8 @@ func (w *Window) Draw() {
 }
 
 func (w *Window) UpdateStatusBar() {
-	w.MoveCursorPos(1, uint16(w.MaxRows))
-	w.ClearLine()
+	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
+	w.Term.LineClear()
 	fmt.Print("\033[48;5;25m")
 	for i := 0; i < w.MaxCols; i++ {
 		fmt.Print(" ")
@@ -115,19 +92,19 @@ func (w *Window) UpdateStatusBar() {
 		nl = "Unknown"
 	}
 	fmt.Print("\033[m")
-	w.MoveCursorPos(1, uint16(w.MaxRows))
+	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
 	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m | Ln %d, Col %d | Tab Size: %d | %s", w.Editor.FilePath, w.Editor.Cursor.Row, w.Editor.Cursor.Col, w.Editor.TabSize, nl)
 	fmt.Print("\033[m")
 }
 
 func (w *Window) Reflesh() {
-	w.Clear()
-	w.Draw()
+	w.Term.ScreenClear()
+	w.DrawAll()
 	w.UpdateStatusBar()
-	w.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
+	w.Term.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
 }
 
 func (w *Window) RefleshCursorOnly() {
 	w.UpdateStatusBar()
-	w.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
+	w.Term.MoveCursorPos(w.Editor.Cursor.Col+6, w.Editor.Cursor.Row)
 }

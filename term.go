@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -8,17 +9,18 @@ import (
 )
 
 type UnixTerm interface {
+	SetAttr(code string)
+	EnableASB()
+	DisableASB()
 	EnableCursor()
 	DisableCursor()
 	ScreenClear()
 	LineClear()
 	InitCursorPos()
-	MoveCursorPos()
-	EnableASB()
-	DisableASB()
+	MoveCursorPos(col uint16, row uint16)
 }
 
-type _UnixTerm struct{}
+type unixTerm struct{}
 
 // Define termios(unix) object
 type termios struct {
@@ -89,12 +91,46 @@ func (t *Tty) DisableRawMode() {
 	}
 }
 
+func NewUnixTerm() UnixTerm {
+	ut := new(unixTerm)
+	return ut
+}
+
+func (ut *unixTerm) SetAttr(code string) {
+	syscall.Write(0, []byte(code))
+}
+
 // Enable Alternative Screen Buffer
-func EnableASB() {
-	syscall.Write(0, []byte("\033[?1049h"))
+func (ut *unixTerm) EnableASB() {
+	ut.SetAttr("\033[?1049h")
 }
 
 // Disable Alternative Screen Buffer
-func DisableASB() {
-	syscall.Write(0, []byte("\033[?1049l"))
+func (ut *unixTerm) DisableASB() {
+	ut.SetAttr("\033[?1049l")
+}
+
+func (ut *unixTerm) EnableCursor() {
+	ut.SetAttr("\033[?25h")
+}
+
+func (ut *unixTerm) DisableCursor() {
+	ut.SetAttr("\033[?25l")
+}
+
+func (ut *unixTerm) ScreenClear() {
+	ut.SetAttr("\033[2J")
+}
+
+func (ut *unixTerm) LineClear() {
+	ut.SetAttr("\033[2K")
+}
+
+func (ut *unixTerm) InitCursorPos() {
+	ut.SetAttr("\033[1;1H")
+}
+
+// row: 1~, col: 1~
+func (ut *unixTerm) MoveCursorPos(col uint16, row uint16) {
+	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }

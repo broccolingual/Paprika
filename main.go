@@ -3,14 +3,14 @@ package main
 import "os"
 
 func main() {
+	window := NewWindow(os.Args[1])
 	tty := new(Tty)
-	EnableASB()
+	window.Term.EnableASB()
 	tty.EnableRawMode()
 	defer tty.DisableRawMode()
-	defer DisableASB()
-	defer EnableCursor()
+	defer window.Term.DisableASB()
+	defer window.Term.EnableCursor()
 
-	window := NewWindow(os.Args[1])
 	window.Editor.LoadFile()
 	window.Editor.CurrentNode = window.Editor.CurrentNode.Next
 

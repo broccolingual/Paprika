@@ -9,7 +9,7 @@ const (
 type RowNode struct {
 	Prev *RowNode
 	Next *RowNode
-	Row  *GapBuffer
+	Row  GapBuffer
 }
 
 func NewRowsList() *RowNode {

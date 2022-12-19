@@ -1,15 +1,22 @@
 package main
 
-// Define gapbuffer object
-type GapBuffer struct {
+type GapBuffer interface {
+	GetSize() int
+	Get(idx int) rune
+	GetAll() []rune
+	Insert(idx int, ch rune)
+	Erase(idx int)
+}
+
+type gapBuffer struct {
 	size    int
 	gapIdx  int
 	gapSize int
 	buf     []rune
 }
 
-func NewGapBuffer(data []rune, bufSize int) *GapBuffer {
-	gBuf := new(GapBuffer)
+func NewGapBuffer(data []rune, bufSize int) GapBuffer {
+	gBuf := new(gapBuffer)
 	gBuf.size = bufSize
 	gBuf.gapIdx = len(data)
 	gBuf.gapSize = bufSize - gBuf.gapIdx
@@ -18,15 +25,11 @@ func NewGapBuffer(data []rune, bufSize int) *GapBuffer {
 	return gBuf
 }
 
-func (gBuf *GapBuffer) GetSize() int {
-	return gBuf.size - gBuf.gapSize
-}
-
-func (gBuf *GapBuffer) initGap() {
+func (gBuf *gapBuffer) initGap() {
 	gBuf.buf = append(gBuf.buf, make([]rune, gBuf.gapIdx-len(gBuf.buf)+gBuf.gapSize)...)
 }
 
-func (gBuf *GapBuffer) moveGap(idx int) {
+func (gBuf *gapBuffer) moveGap(idx int) {
 	if idx < 0 || idx > gBuf.size {
 		return
 	}
@@ -47,14 +50,18 @@ func (gBuf *GapBuffer) moveGap(idx int) {
 	}
 }
 
-func (gBuf *GapBuffer) Get(idx int) rune {
+func (gBuf *gapBuffer) GetSize() int {
+	return gBuf.size - gBuf.gapSize
+}
+
+func (gBuf *gapBuffer) Get(idx int) rune {
 	if idx >= gBuf.gapIdx {
 		idx += gBuf.gapSize
 	}
 	return gBuf.buf[idx]
 }
 
-func (gBuf *GapBuffer) GetAll() []rune {
+func (gBuf *gapBuffer) GetAll() []rune {
 	var tmp []rune
 	for i := 0; i < int(gBuf.size-gBuf.gapSize); i++ {
 		tmp = append(tmp, gBuf.Get(i))
@@ -62,7 +69,7 @@ func (gBuf *GapBuffer) GetAll() []rune {
 	return tmp
 }
 
-func (gBuf *GapBuffer) Insert(idx int, ch rune) {
+func (gBuf *gapBuffer) Insert(idx int, ch rune) {
 	if idx < 0 || idx > gBuf.size {
 		return
 	}
@@ -72,7 +79,7 @@ func (gBuf *GapBuffer) Insert(idx int, ch rune) {
 	gBuf.gapSize--
 }
 
-func (gBuf *GapBuffer) Erase(idx int) {
+func (gBuf *gapBuffer) Erase(idx int) {
 	if idx < 0 || idx > gBuf.size {
 		return
 	}
