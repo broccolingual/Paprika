@@ -85,16 +85,20 @@ func (w *Window) detectKeys() {
 	w.Reflesh()
 	for {
 		r := <-w.KeyChan
+		cTab := w.Tabs[w.TabIdx] // Current Tab
 		w.Term.DisableCursor()
 		switch r {
 		case CTRL_A: // For test
-			w.Tabs[w.TabIdx].CurrentNode.Delete()
-			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
-				w.Tabs[w.TabIdx].Cursor.Row -= 1
-				w.Tabs[w.TabIdx].MovePrevRow()
+			// TODO: Backspaceの挙動
+			cTab.CurrentNode.Delete()
+			if cTab.Cursor.Row > 1 {
+				cTab.Cursor.Row -= 1
+				cTab.MovePrevRow()
 			} else {
-				w.Tabs[w.TabIdx].MoveNextRow()
+				cTab.MoveNextRow()
 			}
+			cTab.Rows--
+			cTab.SaveFlag = false
 			w.Reflesh()
 		case CTRL_B:
 		case CTRL_C: // Copy
@@ -108,8 +112,11 @@ func (w *Window) detectKeys() {
 		case CTRL_K:
 		case CTRL_L:
 		case CTRL_M: // Enter
-			w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
-			w.Tabs[w.TabIdx].Cursor.Row += 1
+			// TODO: 改行の挙動
+			cTab.CurrentNode = cTab.CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
+			cTab.Cursor.Row += 1
+			cTab.Rows++
+			cTab.SaveFlag = false
 			w.Reflesh()
 		case CTRL_N:
 		case CTRL_O:
@@ -119,7 +126,9 @@ func (w *Window) detectKeys() {
 			w.PrevTab()
 			w.Reflesh()
 		case CTRL_S: // Save
-			_ = w.Tabs[w.TabIdx].SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(w.Tabs[w.TabIdx].FilePath)), w.Tabs[w.TabIdx].NL)
+			_ = cTab.SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(cTab.FilePath)), cTab.NL)
+			cTab.SaveFlag = true
+			w.RefleshCursorOnly()
 		case CTRL_T: // Next Tab
 			w.NextTab()
 			w.Reflesh()
@@ -132,61 +141,65 @@ func (w *Window) detectKeys() {
 			if !w.DeleteTab() {
 				return
 			}
+			cTab.SaveFlag = false
 			w.Reflesh()
 		case CTRL_Z:
 		case ESC:
 			return
 		case 32: // Space
-			w.Tabs[w.TabIdx].Cursor.Col += 1
-			w.Tabs[w.TabIdx].CurrentNode.Row.Insert(int(w.Tabs[w.TabIdx].Cursor.Col-2), r)
+			cTab.Cursor.Col += 1
+			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
+			cTab.SaveFlag = false
 			w.Reflesh()
 		case 127: // Backspace
-			if w.Tabs[w.TabIdx].Cursor.Col > 1 {
-				w.Tabs[w.TabIdx].Cursor.Col -= 1
-				w.Tabs[w.TabIdx].CurrentNode.Row.Erase(int(w.Tabs[w.TabIdx].Cursor.Col - 1))
+			if cTab.Cursor.Col > 1 {
+				cTab.Cursor.Col -= 1
+				cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col - 1))
 			}
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			cTab.SaveFlag = false
 			w.RefleshCursorOnly()
 		case KEY_UP:
 			w.Term.LineClear()
-			w.DrawUnfocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
-			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
-				w.Tabs[w.TabIdx].Cursor.Row -= 1
-				w.Tabs[w.TabIdx].Cursor.Col = 1
-				w.Tabs[w.TabIdx].MovePrevRow()
+			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			if cTab.Cursor.Row > 1 {
+				cTab.Cursor.Row -= 1
+				cTab.Cursor.Col = 1
+				cTab.MovePrevRow()
 			}
-			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
+			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_DOWN:
 			w.Term.LineClear()
-			w.DrawUnfocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
-			if w.Tabs[w.TabIdx].Cursor.Row <= w.Tabs[w.TabIdx].Rows {
-				w.Tabs[w.TabIdx].Cursor.Row += 1
-				w.Tabs[w.TabIdx].Cursor.Col = 1
-				w.Tabs[w.TabIdx].MoveNextRow()
+			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			if cTab.Cursor.Row <= cTab.Rows {
+				cTab.Cursor.Row += 1
+				cTab.Cursor.Col = 1
+				cTab.MoveNextRow()
 			}
-			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
+			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
-			if w.Tabs[w.TabIdx].Cursor.Col <= uint16(w.Tabs[w.TabIdx].CurrentNode.Row.GetSize()) {
-				w.Tabs[w.TabIdx].Cursor.Col += 1
+			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Row.GetSize()) {
+				cTab.Cursor.Col += 1
 			}
 			w.RefleshCursorOnly()
 		case KEY_LEFT:
-			if w.Tabs[w.TabIdx].Cursor.Col > 1 {
-				w.Tabs[w.TabIdx].Cursor.Col -= 1
+			if cTab.Cursor.Col > 1 {
+				cTab.Cursor.Col -= 1
 			}
 			w.RefleshCursorOnly()
 		default:
-			w.Tabs[w.TabIdx].Cursor.Col += 1
-			w.Tabs[w.TabIdx].CurrentNode.Row.Insert(int(w.Tabs[w.TabIdx].Cursor.Col-2), r)
+			cTab.Cursor.Col += 1
+			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			cTab.SaveFlag = false
 			w.RefleshCursorOnly()
 		}
 		w.Term.EnableCursor()

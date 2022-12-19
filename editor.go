@@ -18,6 +18,7 @@ type Editor struct {
 	TabSize     uint8
 	NL          int
 	Rows        uint16
+	SaveFlag    bool
 }
 
 type Cursor struct {
@@ -41,6 +42,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.Rows = 0
+	editor.SaveFlag = false
 	return
 }
 

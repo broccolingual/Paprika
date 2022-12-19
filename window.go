@@ -90,8 +90,10 @@ func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 }
 
 func (w *Window) DrawAll() {
+	cTab := w.Tabs[w.TabIdx]
+
 	w.Term.InitCursorPos()
-	pNode := w.Tabs[w.TabIdx].Root
+	pNode := cTab.Root
 	if pNode.Prev == pNode.Next {
 		return
 	}
@@ -100,7 +102,7 @@ func (w *Window) DrawAll() {
 		if pNode.Row == nil {
 			break
 		}
-		if pNode == w.Tabs[w.TabIdx].CurrentNode {
+		if pNode == cTab.CurrentNode {
 			w.DrawFocusRow(i, string(pNode.Row.GetAll()))
 		} else {
 			w.DrawUnfocusRow(i, string(pNode.Row.GetAll()))
@@ -109,6 +111,8 @@ func (w *Window) DrawAll() {
 }
 
 func (w *Window) UpdateStatusBar() {
+	cTab := w.Tabs[w.TabIdx]
+
 	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
 	w.Term.LineClear()
 	fmt.Print("\033[48;5;25m")
@@ -116,7 +120,7 @@ func (w *Window) UpdateStatusBar() {
 		fmt.Print(" ")
 	}
 	var nl string
-	switch w.Tabs[w.TabIdx].NL {
+	switch cTab.NL {
 	case NL_CRLF:
 		nl = "CRLF"
 	case NL_LF:
@@ -124,20 +128,33 @@ func (w *Window) UpdateStatusBar() {
 	default:
 		nl = "Unknown"
 	}
+	var sf string
+	switch cTab.SaveFlag {
+	case true:
+		sf = "Saved"
+	case false:
+		sf = "*Not saved"
+	}
 	fmt.Print("\033[m")
 	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
-	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m [%d/%d] | Ln %d, Col %d | Tab Size: %d | %s", w.Tabs[w.TabIdx].FilePath, w.TabIdx+1, len(w.Tabs), w.Tabs[w.TabIdx].Cursor.Row, w.Tabs[w.TabIdx].Cursor.Col, w.Tabs[w.TabIdx].TabSize, nl)
+	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m [%d/%d]", cTab.FilePath, w.TabIdx+1, len(w.Tabs))
+	fmt.Printf(" | Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
+	fmt.Printf(" | %s", sf)
 	fmt.Print("\033[m")
 }
 
 func (w *Window) Reflesh() {
+	cTab := w.Tabs[w.TabIdx]
+
 	w.Term.ScreenClear()
 	w.DrawAll()
 	w.UpdateStatusBar()
-	w.Term.MoveCursorPos(w.Tabs[w.TabIdx].Cursor.Col+6, w.Tabs[w.TabIdx].Cursor.Row)
+	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }
 
 func (w *Window) RefleshCursorOnly() {
+	cTab := w.Tabs[w.TabIdx]
+
 	w.UpdateStatusBar()
-	w.Term.MoveCursorPos(w.Tabs[w.TabIdx].Cursor.Col+6, w.Tabs[w.TabIdx].Cursor.Row)
+	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }
