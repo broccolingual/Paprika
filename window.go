@@ -53,7 +53,7 @@ func (w *Window) DrawFocusRow(lineNum int, rowData string) {
 
 func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 	w.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("%4d  %s", lineNum, rowData)
+	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, rowData)
 }
 
 func (w *Window) DrawAll() {

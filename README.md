@@ -1,12 +1,7 @@
-# Golang 開発(linux)の標準テンプレート
-
-このレポジトリは、Golang 開発(linux)の標準的な実行・ビルド設定などをまとめたテンプレートです。
-
-## 説明
-
-- `bin/` : ビルドされた実行ファイルの出力先
-- `.editorconfig` : VSCode, GoLand で利用できるエディタの設定ファイル
-- `go.mod` : go mod の設定ファイル
-- `Makefile` : 各種 make コマンドを記載したファイル
-- `.gitignore` : git 管理除外設定ファイル
-- `main.go` : メインスクリプト
+- `main.go` : メイン関数
+- `editor.go` : ファイル管理用の構造体
+- `gapbuffer.go` : 行単位のギャップバッファ
+- `keyboard.go` : キーボードからの入力受け取り
+- `rowslist.go` : 行単位の双方向連結リスト
+- `term.go` : Unixのターミナルの設定
+- `window.go` : ウインドウ管理用の構造体
