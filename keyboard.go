@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"unicode/utf8"
 )
 
@@ -98,76 +100,84 @@ func (w *Window) detectKeys() {
 		case CTRL_K:
 		case CTRL_L:
 		case CTRL_M: // Enter
-			w.Editor.Cursor.Col += 1
+			w.Tabs[w.TabIdx].Cursor.Col += 1
 			// TODO: NEW LINE
 		case CTRL_N:
 		case CTRL_O:
 		case CTRL_P:
 		case CTRL_Q:
-		case CTRL_R:
+		case CTRL_R: // Prev Tab
+			w.PrevTab()
+			w.Reflesh()
 		case CTRL_S: // Save
-			_ = w.Editor.SaveNew("./bin/Makefile.bak", NL_CRLF)
-		case CTRL_T:
+			_ = w.Tabs[w.TabIdx].SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(w.Tabs[w.TabIdx].FilePath)), w.Tabs[w.TabIdx].NL)
+		case CTRL_T: // Next Tab
+			w.NextTab()
+			w.Reflesh()
 		case CTRL_U:
 		case CTRL_V:
 		case CTRL_W:
 		case CTRL_X: // Exit
 			return
-		case CTRL_Y:
+		case CTRL_Y: // Delete Tab
+			if !w.DeleteTab() {
+				return
+			}
+			w.Reflesh()
 		case CTRL_Z:
 		case ESC:
 			return
 		case 32: // Space
-			w.Editor.Cursor.Col += 1
-			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
+			w.Tabs[w.TabIdx].Cursor.Col += 1
+			w.Tabs[w.TabIdx].CurrentNode.Row.Insert(int(w.Tabs[w.TabIdx].Cursor.Col-2), r)
 			w.Reflesh()
 		case 127: // Backspace
-			if w.Editor.Cursor.Col > 1 {
-				w.Editor.Cursor.Col -= 1
-				w.Editor.CurrentNode.Row.Erase(int(w.Editor.Cursor.Col - 1))
+			if w.Tabs[w.TabIdx].Cursor.Col > 1 {
+				w.Tabs[w.TabIdx].Cursor.Col -= 1
+				w.Tabs[w.TabIdx].CurrentNode.Row.Erase(int(w.Tabs[w.TabIdx].Cursor.Col - 1))
 			}
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_UP:
 			w.Term.LineClear()
-			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			if w.Editor.Cursor.Row > 1 {
-				w.Editor.Cursor.Row -= 1
-				w.Editor.Cursor.Col = 1
-				w.Editor.CurrentNode = w.Editor.CurrentNode.Prev
+			w.DrawUnfocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			if w.Tabs[w.TabIdx].Cursor.Row > 1 {
+				w.Tabs[w.TabIdx].Cursor.Row -= 1
+				w.Tabs[w.TabIdx].Cursor.Col = 1
+				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Prev
 			}
-			w.Term.MoveCursorPos(1, w.Editor.Cursor.Row)
+			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_DOWN:
 			w.Term.LineClear()
-			w.DrawUnfocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
-			if w.Editor.Cursor.Row <= w.Editor.Rows {
-				w.Editor.Cursor.Row += 1
-				w.Editor.Cursor.Col = 1
-				w.Editor.CurrentNode = w.Editor.CurrentNode.Next
+			w.DrawUnfocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
+			if w.Tabs[w.TabIdx].Cursor.Row <= w.Tabs[w.TabIdx].Rows {
+				w.Tabs[w.TabIdx].Cursor.Row += 1
+				w.Tabs[w.TabIdx].Cursor.Col = 1
+				w.Tabs[w.TabIdx].CurrentNode = w.Tabs[w.TabIdx].CurrentNode.Next
 			}
-			w.Term.MoveCursorPos(1, w.Editor.Cursor.Row)
+			w.Term.MoveCursorPos(1, w.Tabs[w.TabIdx].Cursor.Row)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
-			if w.Editor.Cursor.Col <= uint16(w.Editor.CurrentNode.Row.GetSize()) {
-				w.Editor.Cursor.Col += 1
+			if w.Tabs[w.TabIdx].Cursor.Col <= uint16(w.Tabs[w.TabIdx].CurrentNode.Row.GetSize()) {
+				w.Tabs[w.TabIdx].Cursor.Col += 1
 			}
 			w.RefleshCursorOnly()
 		case KEY_LEFT:
-			if w.Editor.Cursor.Col > 1 {
-				w.Editor.Cursor.Col -= 1
+			if w.Tabs[w.TabIdx].Cursor.Col > 1 {
+				w.Tabs[w.TabIdx].Cursor.Col -= 1
 			}
 			w.RefleshCursorOnly()
 		default:
-			w.Editor.Cursor.Col += 1
-			w.Editor.CurrentNode.Row.Insert(int(w.Editor.Cursor.Col-2), r)
+			w.Tabs[w.TabIdx].Cursor.Col += 1
+			w.Tabs[w.TabIdx].CurrentNode.Row.Insert(int(w.Tabs[w.TabIdx].Cursor.Col-2), r)
 			w.Term.LineClear()
-			w.DrawFocusRow(int(w.Editor.Cursor.Row), string(w.Editor.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(w.Tabs[w.TabIdx].Cursor.Row), string(w.Tabs[w.TabIdx].CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		}
 		w.Term.EnableCursor()

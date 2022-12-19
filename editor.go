@@ -119,13 +119,7 @@ func (e *Editor) SaveNew(filePath string, nl int) (saveBytes int) {
 }
 
 func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
-	var fp *os.File
-	_, err := os.Stat(filePath)
-	if os.IsNotExist(err) {
-		fp, err = os.Create(filePath)
-	} else {
-		fp, err = os.Open(filePath)
-	}
+	fp, err := os.Create(filePath)
 	if err != nil {
 		panic(err)
 	}
