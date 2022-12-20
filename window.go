@@ -81,12 +81,12 @@ func (w *Window) DrawFocusRow(lineNum int, rowData string) {
 	}
 	fmt.Printf("\033[m")
 	w.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("\033[1m%4d\033[m  \033[48;5;235m%s\033[m", lineNum, rowData)
+	fmt.Printf("\033[1m%4d\033[m  \033[48;5;235m%s\033[m", lineNum, Highlighter(Tokenize(rowData), ".go", true))
 }
 
 func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 	w.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, rowData)
+	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, Highlighter(Tokenize(rowData), ".go", false))
 }
 
 func (w *Window) DrawAll() {

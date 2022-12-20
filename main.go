@@ -11,8 +11,11 @@ func main() {
 	defer window.Term.DisableASB()
 	defer window.Term.EnableCursor()
 
-	window.AddTab(os.Args[1])
-	window.AddTab(os.Args[2])
+	for i, path := range os.Args {
+		if i != 0 {
+			window.AddTab(path)
+		}
+	}
 
 	for _, tab := range window.Tabs {
 		tab.LoadFile()
