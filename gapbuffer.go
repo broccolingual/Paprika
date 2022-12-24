@@ -8,13 +8,15 @@ type GapBuffer interface {
 	Erase(idx int) bool
 }
 
+// ギャップバッファ構造体
 type gapBuffer struct {
-	size    int
-	gapIdx  int
-	gapSize int
-	buf     []rune
+	size    int    // バッファサイズ
+	gapIdx  int    // ギャップの開始インデックス
+	gapSize int    // ギャップサイズ
+	buf     []rune // バッファ
 }
 
+// 新しいギャップバッファの取得
 func NewGapBuffer(data []rune, bufSize int) GapBuffer {
 	gBuf := new(gapBuffer)
 	gBuf.size = bufSize
@@ -25,10 +27,12 @@ func NewGapBuffer(data []rune, bufSize int) GapBuffer {
 	return gBuf
 }
 
+// ギャップバッファの初期化 (バッファのギャップ部分を0埋め)
 func (gBuf *gapBuffer) initGap() {
 	gBuf.buf = append(gBuf.buf, make([]rune, gBuf.gapIdx-len(gBuf.buf)+gBuf.gapSize)...)
 }
 
+// 指定したインデックスにギャップを移動
 func (gBuf *gapBuffer) moveGap(idx int) {
 	if idx < 0 || idx > gBuf.size {
 		return
@@ -50,10 +54,12 @@ func (gBuf *gapBuffer) moveGap(idx int) {
 	}
 }
 
+// バッファ内のruneのサイズを取得
 func (gBuf *gapBuffer) GetSize() int {
 	return gBuf.size - gBuf.gapSize
 }
 
+// バッファのruneを取得
 func (gBuf *gapBuffer) Get(idx int) rune {
 	if idx >= gBuf.gapIdx {
 		idx += gBuf.gapSize
@@ -61,6 +67,7 @@ func (gBuf *gapBuffer) Get(idx int) rune {
 	return gBuf.buf[idx]
 }
 
+// バッファのruneをすべて取得
 func (gBuf *gapBuffer) GetAll() []rune {
 	var tmp []rune
 	for i := 0; i < int(gBuf.size-gBuf.gapSize); i++ {
@@ -69,6 +76,7 @@ func (gBuf *gapBuffer) GetAll() []rune {
 	return tmp
 }
 
+// バッファにruneを挿入
 func (gBuf *gapBuffer) Insert(idx int, ch rune) bool {
 	if idx < 0 || idx > gBuf.size {
 		return false
@@ -80,6 +88,7 @@ func (gBuf *gapBuffer) Insert(idx int, ch rune) bool {
 	return true
 }
 
+// バッファのruneを削除
 func (gBuf *gapBuffer) Erase(idx int) bool {
 	if idx < 0 || idx > gBuf.size {
 		return false

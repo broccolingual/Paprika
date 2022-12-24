@@ -53,9 +53,9 @@ func Highlighter(token []string, lang string, focus bool) string {
 		for _, ch := range token {
 			if containsToken(goReserved, ch) {
 				if focus == false {
-					concat += fmt.Sprintf("\033[38;5;2m%s\033[m ", ch)
+					concat += fmt.Sprintf("\033[38;5;3m%s\033[m ", ch)
 				} else {
-					concat += fmt.Sprintf("\033[38;5;2m%s\033[m\033[48;5;235m ", ch)
+					concat += fmt.Sprintf("\033[38;5;3m%s\033[m\033[48;5;235m ", ch)
 				}
 			} else {
 				concat += ch + " "

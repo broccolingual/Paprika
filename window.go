@@ -89,24 +89,22 @@ func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, Highlighter(Tokenize(rowData), ".go", false))
 }
 
-func (w *Window) DrawAll() {
+// TODO: 開始行とカーソルの位置が一致しない問題の修正
+func (w *Window) DrawAll(num uint16) {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.InitCursorPos()
-	pNode := cTab.Root
-	if pNode.Prev == pNode.Next {
-		return
-	}
-	for i := 1; i < w.MaxRows; i++ {
-		pNode = pNode.Next
-		if pNode.Row == nil {
+	pNode := cTab.GetRowFromNum(num)
+	for i := 0; i < w.MaxRows-1; i++ {
+		if pNode.IsRoot() {
 			break
 		}
 		if pNode == cTab.CurrentNode {
-			w.DrawFocusRow(i, string(pNode.Row.GetAll()))
+			w.DrawFocusRow(i+int(num), string(pNode.Row.GetAll()))
 		} else {
-			w.DrawUnfocusRow(i, string(pNode.Row.GetAll()))
+			w.DrawUnfocusRow(i+int(num), string(pNode.Row.GetAll()))
 		}
+		pNode = pNode.Next
 	}
 }
 
@@ -114,7 +112,7 @@ func (w *Window) UpdateStatusBar() {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
-	w.Term.LineClear()
+	w.Term.ClearRow()
 	fmt.Print("\033[48;5;25m")
 	for i := 0; i < w.MaxCols; i++ {
 		fmt.Print(" ")
@@ -146,8 +144,8 @@ func (w *Window) UpdateStatusBar() {
 func (w *Window) Reflesh() {
 	cTab := w.Tabs[w.TabIdx]
 
-	w.Term.ScreenClear()
-	w.DrawAll()
+	w.Term.ClearAll()
+	w.DrawAll(5)
 	w.UpdateStatusBar()
 	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }

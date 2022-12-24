@@ -14,8 +14,12 @@ type UnixTerm interface {
 	DisableASB()
 	EnableCursor()
 	DisableCursor()
-	ScreenClear()
-	LineClear()
+	ClearAfterCursor()
+	ClearBeforeCursor()
+	ClearAll()
+	ClearRowRight()
+	ClearRowLeft()
+	ClearRow()
 	InitCursorPos()
 	MoveCursorPos(col uint16, row uint16)
 }
@@ -56,7 +60,7 @@ func tcGetAttr(fd uintptr) *termios {
 	return termios
 }
 
-// Enable Raw / Non Canonical Mode
+// Rawモード/非カノニカルモードの有効化
 // termios - Iflag
 // ^BRKINT: BrakeをNullバイトとして読み込む
 // INPCK: 入力のパリティチェック有効化
@@ -84,7 +88,7 @@ func (t *Tty) EnableRawMode() {
 	}
 }
 
-// Disable Raw / Non Canonical mode
+// Rawモード/非カノニカルモードの無効化
 func (t *Tty) DisableRawMode() {
 	if e := tcSetAttr(os.Stdin.Fd(), t.original); e != nil {
 		log.Fatalf("Problem disabling raw mode: %s\n", e)
@@ -96,40 +100,67 @@ func NewUnixTerm() UnixTerm {
 	return ut
 }
 
+// エスケープシーケンスの送信
 func (ut *unixTerm) SetAttr(code string) {
 	syscall.Write(0, []byte(code))
 }
 
-// Enable Alternative Screen Buffer
+// Alternative Screen Bufferの有効化
 func (ut *unixTerm) EnableASB() {
 	ut.SetAttr("\033[?1049h")
 }
 
-// Disable Alternative Screen Buffer
+// Alternative Screen Bufferの無効化
 func (ut *unixTerm) DisableASB() {
 	ut.SetAttr("\033[?1049l")
 }
 
+// カーソルの有効化
 func (ut *unixTerm) EnableCursor() {
 	ut.SetAttr("\033[?25h")
 }
 
+// カーソルの無効化
 func (ut *unixTerm) DisableCursor() {
 	ut.SetAttr("\033[?25l")
 }
 
-func (ut *unixTerm) ScreenClear() {
+// カーソル以降をすべて消去
+func (ut *unixTerm) ClearAfterCursor() {
+	ut.SetAttr("\033[0J")
+}
+
+// カーソル以前をすべて消去
+func (ut *unixTerm) ClearBeforeCursor() {
+	ut.SetAttr("\033[1J")
+}
+
+// スクリーンをすべて消去
+func (ut *unixTerm) ClearAll() {
 	ut.SetAttr("\033[2J")
 }
 
-func (ut *unixTerm) LineClear() {
+// その行のカーソルの右端を消去
+func (ut *unixTerm) ClearRowRight() {
+	ut.SetAttr("\033[0K")
+}
+
+// その行カーソルの左端を消去
+func (ut *unixTerm) ClearRowLeft() {
+	ut.SetAttr("\033[1K")
+}
+
+// その行を消去
+func (ut *unixTerm) ClearRow() {
 	ut.SetAttr("\033[2K")
 }
 
+// 1行1列にカーソルを移動
 func (ut *unixTerm) InitCursorPos() {
 	ut.SetAttr("\033[1;1H")
 }
 
+// 対象行・列にカーソルを移動
 // row: 1~, col: 1~
 func (ut *unixTerm) MoveCursorPos(col uint16, row uint16) {
 	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))

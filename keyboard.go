@@ -163,7 +163,7 @@ func (w *Window) detectKeys() {
 			if cTab.Cursor.Col != 1 {
 				cTab.Cursor.Col--
 				cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col - 1))
-				w.Term.LineClear()
+				w.Term.ClearRow()
 				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 				cTab.SaveFlag = false
 				w.RefleshCursorOnly()
@@ -187,7 +187,7 @@ func (w *Window) detectKeys() {
 				}
 			}
 		case KEY_UP:
-			w.Term.LineClear()
+			w.Term.ClearRow()
 			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			if cTab.Cursor.Row > 1 {
 				cTab.Cursor.Row--
@@ -195,11 +195,11 @@ func (w *Window) detectKeys() {
 				cTab.MovePrevRow()
 			}
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
-			w.Term.LineClear()
+			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_DOWN:
-			w.Term.LineClear()
+			w.Term.ClearRow()
 			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			if cTab.Cursor.Row <= cTab.Rows {
 				cTab.Cursor.Row++
@@ -207,7 +207,7 @@ func (w *Window) detectKeys() {
 				cTab.MoveNextRow()
 			}
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
-			w.Term.LineClear()
+			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
@@ -248,7 +248,7 @@ func (w *Window) detectKeys() {
 				// Tab補完の実装
 			default:
 			}
-			w.Term.LineClear()
+			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
 			cTab.SaveFlag = false
 			w.RefleshCursorOnly()

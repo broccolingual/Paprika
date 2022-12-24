@@ -8,24 +8,27 @@ import (
 	"strings"
 )
 
-const LINE_BUF_MAX = 255
+const LINE_BUF_MAX = 255 // 1行のバッファサイズ
 
+// エディタ構造体
 type Editor struct {
-	FilePath    string
-	Cursor      *Cursor
-	Root        *RowNode
-	CurrentNode *RowNode
-	TabSize     uint8
-	NL          int
-	Rows        uint16
-	SaveFlag    bool
+	FilePath    string   // ファイルのパス
+	Cursor      *Cursor  // 現在のカーソル位置
+	Root        *RowNode // 行ノードのルート(ダミーノード)
+	CurrentNode *RowNode // 現在の行ノード
+	TabSize     uint8    // タブサイズ (0~255)
+	NL          int      // 改行文字識別番号
+	Rows        uint16   // ファイルの行数 (65534行まで)
+	SaveFlag    bool     // セーブ済みフラグ
 }
 
+// カーソル構造体
 type Cursor struct {
 	Row uint16
 	Col uint16
 }
 
+// 新しいカーソルの取得
 func NewCursor() (cursor *Cursor) {
 	cursor = new(Cursor)
 	cursor.Row = 1
@@ -33,6 +36,7 @@ func NewCursor() (cursor *Cursor) {
 	return
 }
 
+// 新しいエディタの取得
 func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
@@ -46,6 +50,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	return
 }
 
+// 行から改行文字を判定 (-1は不明の改行文字)
 func GetNL(row []rune) int {
 	if row[len(row)-1] == rune('\n') {
 		if row[len(row)-2] == rune('\r') {
@@ -56,16 +61,19 @@ func GetNL(row []rune) int {
 	return -1
 }
 
+// 行ノードのポインタを1つ進める
 func (e *Editor) MoveNextRow() *RowNode {
 	e.CurrentNode = e.CurrentNode.Next
 	return e.CurrentNode
 }
 
+// 行ノードのポインタを1つ戻す
 func (e *Editor) MovePrevRow() *RowNode {
 	e.CurrentNode = e.CurrentNode.Prev
 	return e.CurrentNode
 }
 
+// エディタに指定されたパスのファイルをロードして、行ノードを構成
 func (e *Editor) LoadFile() {
 	fp, err := os.Open(e.FilePath)
 	if err != nil {
@@ -112,16 +120,19 @@ func (e *Editor) LoadFile() {
 	e.Rows = uint16(rowsCnt)
 }
 
+// エディタに指定されたパスで上書き保存
 func (e *Editor) SaveOverwrite(nl int) (saveBytes int) {
 	saveBytes = e.saveFile(e.FilePath, nl)
 	return
 }
 
+// 新しくファイルを保存
 func (e *Editor) SaveNew(filePath string, nl int) (saveBytes int) {
 	saveBytes = e.saveFile(filePath, nl)
 	return
 }
 
+// ファイルを保存
 func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
 	fp, err := os.Create(filePath)
 	if err != nil {
@@ -155,4 +166,21 @@ func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
 		panic(err)
 	}
 	return
+}
+
+func (e *Editor) GetRowFromNum(num uint16) *RowNode {
+	pNode := e.Root
+	pNode = pNode.Next
+	var cntRow uint16 = 1
+	for {
+		if pNode.IsRoot() {
+			break
+		}
+		if cntRow == num {
+			return pNode
+		}
+		pNode = pNode.Next
+		cntRow++
+	}
+	return nil
 }
