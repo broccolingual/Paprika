@@ -8,23 +8,11 @@ import (
 	"unsafe"
 )
 
-type UnixTerm interface {
-	SetAttr(code string)
-	EnableASB()
-	DisableASB()
-	EnableCursor()
-	DisableCursor()
-	ClearAfterCursor()
-	ClearBeforeCursor()
-	ClearAll()
-	ClearRowRight()
-	ClearRowLeft()
-	ClearRow()
-	InitCursorPos()
-	MoveCursorPos(col uint16, row uint16)
-}
+type UnixTerm _UnixTerm
 
-type unixTerm struct{}
+type _UnixTerm struct {
+	origTermSetting *termios
+}
 
 // Define termios(unix) object
 type termios struct {
@@ -35,11 +23,6 @@ type termios struct {
 	Cc     [20]byte
 	Ispeed uint32
 	Ospeed uint32
-}
-
-// Define original tty object
-type Tty struct {
-	original *termios
 }
 
 // Set termios attribute
@@ -74,10 +57,10 @@ func tcGetAttr(fd uintptr) *termios {
 // ICANON: カノニカルモードの有効化
 // IEXTEN: 実装依存の入力処理の有効化
 // ISIG: シグナルを発生させる(Ctrl+C/Z etc...)
-func (t *Tty) EnableRawMode() {
-	t.original = tcGetAttr(os.Stdin.Fd())
+func (ut *UnixTerm) EnableRawMode() {
+	ut.origTermSetting = tcGetAttr(os.Stdin.Fd())
 	var raw termios
-	raw = *t.original
+	raw = *ut.origTermSetting
 	raw.Iflag &^= syscall.BRKINT | syscall.ICRNL | syscall.INPCK | syscall.ISTRIP | syscall.IXON
 	raw.Cflag |= syscall.CS8
 	raw.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
@@ -89,79 +72,79 @@ func (t *Tty) EnableRawMode() {
 }
 
 // Rawモード/非カノニカルモードの無効化
-func (t *Tty) DisableRawMode() {
-	if e := tcSetAttr(os.Stdin.Fd(), t.original); e != nil {
+func (ut *UnixTerm) DisableRawMode() {
+	if e := tcSetAttr(os.Stdin.Fd(), ut.origTermSetting); e != nil {
 		log.Fatalf("Problem disabling raw mode: %s\n", e)
 	}
 }
 
-func NewUnixTerm() UnixTerm {
-	ut := new(unixTerm)
+func NewUnixTerm() *UnixTerm {
+	ut := new(UnixTerm)
 	return ut
 }
 
 // エスケープシーケンスの送信
-func (ut *unixTerm) SetAttr(code string) {
+func (ut *UnixTerm) SetAttr(code string) {
 	syscall.Write(0, []byte(code))
 }
 
 // Alternative Screen Bufferの有効化
-func (ut *unixTerm) EnableASB() {
+func (ut *UnixTerm) EnableASB() {
 	ut.SetAttr("\033[?1049h")
 }
 
 // Alternative Screen Bufferの無効化
-func (ut *unixTerm) DisableASB() {
+func (ut *UnixTerm) DisableASB() {
 	ut.SetAttr("\033[?1049l")
 }
 
 // カーソルの有効化
-func (ut *unixTerm) EnableCursor() {
+func (ut *UnixTerm) EnableCursor() {
 	ut.SetAttr("\033[?25h")
 }
 
 // カーソルの無効化
-func (ut *unixTerm) DisableCursor() {
+func (ut *UnixTerm) DisableCursor() {
 	ut.SetAttr("\033[?25l")
 }
 
 // カーソル以降をすべて消去
-func (ut *unixTerm) ClearAfterCursor() {
+func (ut *UnixTerm) ClearAfterCursor() {
 	ut.SetAttr("\033[0J")
 }
 
 // カーソル以前をすべて消去
-func (ut *unixTerm) ClearBeforeCursor() {
+func (ut *UnixTerm) ClearBeforeCursor() {
 	ut.SetAttr("\033[1J")
 }
 
 // スクリーンをすべて消去
-func (ut *unixTerm) ClearAll() {
+func (ut *UnixTerm) ClearAll() {
 	ut.SetAttr("\033[2J")
 }
 
 // その行のカーソルの右端を消去
-func (ut *unixTerm) ClearRowRight() {
+func (ut *UnixTerm) ClearRowRight() {
 	ut.SetAttr("\033[0K")
 }
 
 // その行カーソルの左端を消去
-func (ut *unixTerm) ClearRowLeft() {
+func (ut *UnixTerm) ClearRowLeft() {
 	ut.SetAttr("\033[1K")
 }
 
 // その行を消去
-func (ut *unixTerm) ClearRow() {
+func (ut *UnixTerm) ClearRow() {
 	ut.SetAttr("\033[2K")
 }
 
 // 1行1列にカーソルを移動
-func (ut *unixTerm) InitCursorPos() {
+func (ut *UnixTerm) InitCursorPos() {
 	ut.SetAttr("\033[1;1H")
 }
 
 // 対象行・列にカーソルを移動
 // row: 1~, col: 1~
-func (ut *unixTerm) MoveCursorPos(col uint16, row uint16) {
+func (ut *UnixTerm) MoveCursorPos(col uint16, row uint16) {
 	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }

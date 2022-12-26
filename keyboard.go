@@ -38,11 +38,21 @@ const (
 )
 
 const (
+	SPACE     = 32
+	BACKSPACE = 127
 	KEY_UP    = 1001
 	KEY_DOWN  = 1002
 	KEY_RIGHT = 1003
 	KEY_LEFT  = 1004
 )
+
+var COMPLETION_LIST map[rune]rune = map[rune]rune{
+	'{':  '}',
+	'[':  ']',
+	'(':  ')',
+	'"':  '"',
+	'\'': '\'',
+}
 
 func (w *Window) parseKey(b []byte) (rune, int) {
 	if len(b) == 3 {
@@ -102,20 +112,20 @@ func (w *Window) detectKeys() {
 		case CTRL_L:
 		case CTRL_M: // Enter
 			if cTab.Cursor.Col != 1 {
-				cTab.CurrentNode = cTab.CurrentNode.Insert(cTab.CurrentNode.Row.GetAll(), LINE_BUF_MAX)
+				cTab.CurrentNode = cTab.CurrentNode.Insert(cTab.CurrentNode.Buf.GetAll(), LINE_BUF_MAX)
 				cTab.MovePrevRow()
-				tmp := cTab.CurrentNode.Row.GetSize() + 1
+				tmp := cTab.CurrentNode.Buf.GetSize() + 1
 				for i := int(cTab.Cursor.Col); i < tmp; i++ {
-					cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col) - 1)
+					cTab.CurrentNode.Buf.Erase(int(cTab.Cursor.Col) - 1)
 				}
 				cTab.MoveNextRow()
 				for i := 1; i < int(cTab.Cursor.Col); i++ {
-					cTab.CurrentNode.Row.Erase(0)
+					cTab.CurrentNode.Buf.Erase(0)
 				}
 				cTab.Cursor.Col = 1
 				cTab.Cursor.Row++
 			} else {
-				if cTab.CurrentNode.Row.GetSize() != 0 {
+				if cTab.CurrentNode.Buf.GetSize() != 0 {
 					cTab.MovePrevRow()
 					cTab.CurrentNode = cTab.CurrentNode.Insert(make([]rune, 0), LINE_BUF_MAX)
 				} else {
@@ -151,35 +161,46 @@ func (w *Window) detectKeys() {
 			}
 			cTab.SaveFlag = false
 			w.Reflesh()
-		case CTRL_Z:
+		case CTRL_Z: // Comment Out
+			if cTab.CurrentNode.Buf.Check(0, []rune("// ")) {
+				cTab.CurrentNode.Buf.EraseAll(0, 3)
+				cTab.Cursor.Col -= 3
+			} else {
+				cTab.CurrentNode.Buf.InsertAll(0, []rune("// "))
+				cTab.Cursor.Col += 3
+			}
+			w.Term.ClearRow()
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
+			cTab.SaveFlag = false
+			w.RefleshCursorOnly()
 		case ESC:
 			return
-		case 32: // Space
+		case SPACE: // Space
 			cTab.Cursor.Col++
-			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
+			cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), r)
 			cTab.SaveFlag = false
 			w.Reflesh()
-		case 127: // Backspace
+		case BACKSPACE: // Backspace
 			if cTab.Cursor.Col != 1 {
 				cTab.Cursor.Col--
-				cTab.CurrentNode.Row.Erase(int(cTab.Cursor.Col - 1))
+				cTab.CurrentNode.Buf.Erase(int(cTab.Cursor.Col - 1))
 				w.Term.ClearRow()
-				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 				cTab.SaveFlag = false
 				w.RefleshCursorOnly()
 			} else {
 				if cTab.Cursor.Row != 1 {
 					var tmp []rune
-					if cTab.CurrentNode.Row.GetSize() != 0 {
-						tmp = cTab.CurrentNode.Row.GetAll()
+					if cTab.CurrentNode.Buf.GetSize() != 0 {
+						tmp = cTab.CurrentNode.Buf.GetAll()
 					}
 					cTab.Cursor.Row--
 					cTab.CurrentNode = cTab.CurrentNode.Delete()
-					origCursorPos := uint16(cTab.CurrentNode.Row.GetSize() + 1)
+					origCursorPos := uint16(cTab.CurrentNode.Buf.GetSize() + 1)
 					cTab.Cursor.Col = origCursorPos
 					for _, ch := range tmp {
 						cTab.Cursor.Col++
-						cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), ch)
+						cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), ch)
 					}
 					cTab.Cursor.Col = origCursorPos
 					cTab.SaveFlag = false
@@ -188,7 +209,7 @@ func (w *Window) detectKeys() {
 			}
 		case KEY_UP:
 			w.Term.ClearRow()
-			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			if cTab.Cursor.Row > 1 {
 				cTab.Cursor.Row--
 				cTab.Cursor.Col = 1
@@ -196,11 +217,11 @@ func (w *Window) detectKeys() {
 			}
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.ClearRow()
-			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_DOWN:
 			w.Term.ClearRow()
-			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			if cTab.Cursor.Row <= cTab.Rows {
 				cTab.Cursor.Row++
 				cTab.Cursor.Col = 1
@@ -208,10 +229,10 @@ func (w *Window) detectKeys() {
 			}
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.ClearRow()
-			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			w.RefleshCursorOnly()
 		case KEY_RIGHT:
-			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Row.GetSize()) {
+			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Buf.GetSize()) {
 				cTab.Cursor.Col++
 			}
 			w.RefleshCursorOnly()
@@ -222,34 +243,35 @@ func (w *Window) detectKeys() {
 			w.RefleshCursorOnly()
 		default:
 			cTab.Cursor.Col++
-			cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), r)
-			switch r { // Complemention
+			cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), r)
+			switch r { // Completion
 			case rune('('):
 				cTab.Cursor.Col++
-				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune(')'))
+				cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), COMPLETION_LIST[r])
 				cTab.Cursor.Col--
 			case rune('{'):
 				cTab.Cursor.Col++
-				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('}'))
+				cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), COMPLETION_LIST[r])
 				cTab.Cursor.Col--
 			case rune('['):
 				cTab.Cursor.Col++
-				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune(']'))
+				cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), COMPLETION_LIST[r])
 				cTab.Cursor.Col--
 			case rune('\''):
 				cTab.Cursor.Col++
-				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('\''))
+				cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), COMPLETION_LIST[r])
 				cTab.Cursor.Col--
 			case rune('"'):
 				cTab.Cursor.Col++
-				cTab.CurrentNode.Row.Insert(int(cTab.Cursor.Col-2), rune('"'))
+				cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), COMPLETION_LIST[r])
 				cTab.Cursor.Col--
 			case rune('\t'):
-				// Tab補完の実装
+				// TODO: Tab補完の実装 (※反応せず)
+				cTab.Cursor.Col += uint16(cTab.TabSize)
 			default:
 			}
 			w.Term.ClearRow()
-			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Row.GetAll()))
+			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			cTab.SaveFlag = false
 			w.RefleshCursorOnly()
 		}

@@ -1,3 +1,3 @@
-module github.com/broccolingual/golang-dev-template
+module golang-text-editor
 
 go 1.19

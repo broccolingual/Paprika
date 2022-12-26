@@ -6,20 +6,29 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"golang-text-editor/common"
+)
+
+type nlCode int // 改行文字タイプの定義
+
+const (
+	NL_LF nlCode = iota
+	NL_CRLF
 )
 
 const LINE_BUF_MAX = 255 // 1行のバッファサイズ
 
 // エディタ構造体
 type Editor struct {
-	FilePath    string   // ファイルのパス
-	Cursor      *Cursor  // 現在のカーソル位置
-	Root        *RowNode // 行ノードのルート(ダミーノード)
-	CurrentNode *RowNode // 現在の行ノード
-	TabSize     uint8    // タブサイズ (0~255)
-	NL          int      // 改行文字識別番号
-	Rows        uint16   // ファイルの行数 (65534行まで)
-	SaveFlag    bool     // セーブ済みフラグ
+	FilePath    string          // ファイルのパス
+	Cursor      *Cursor         // 現在のカーソル位置
+	Root        *common.RowNode // 行ノードのルート(ダミーノード)
+	CurrentNode *common.RowNode // 現在の行ノード
+	TabSize     uint8           // タブサイズ (0~255)
+	NL          nlCode          // 改行文字識別番号
+	Rows        uint16          // ファイルの行数 (65534行まで)
+	SaveFlag    bool            // セーブ済みフラグ
 }
 
 // カーソル構造体
@@ -41,7 +50,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
 	editor.Cursor = NewCursor()
-	editor.Root = NewRowsList()
+	editor.Root = common.NewRootNode()
 	editor.CurrentNode = editor.Root
 	editor.TabSize = tabSize
 	editor.NL = -1
@@ -51,7 +60,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 }
 
 // 行から改行文字を判定 (-1は不明の改行文字)
-func GetNL(row []rune) int {
+func GetNL(row []rune) nlCode {
 	if row[len(row)-1] == rune('\n') {
 		if row[len(row)-2] == rune('\r') {
 			return NL_CRLF
@@ -62,13 +71,13 @@ func GetNL(row []rune) int {
 }
 
 // 行ノードのポインタを1つ進める
-func (e *Editor) MoveNextRow() *RowNode {
+func (e *Editor) MoveNextRow() *common.RowNode {
 	e.CurrentNode = e.CurrentNode.Next
 	return e.CurrentNode
 }
 
 // 行ノードのポインタを1つ戻す
-func (e *Editor) MovePrevRow() *RowNode {
+func (e *Editor) MovePrevRow() *common.RowNode {
 	e.CurrentNode = e.CurrentNode.Prev
 	return e.CurrentNode
 }
@@ -108,7 +117,7 @@ func (e *Editor) LoadFile() {
 			}
 		}
 
-		e.Root.Prev.Append(replacedRune, LINE_BUF_MAX)
+		e.Root.Prev.Insert(replacedRune, LINE_BUF_MAX)
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -121,19 +130,19 @@ func (e *Editor) LoadFile() {
 }
 
 // エディタに指定されたパスで上書き保存
-func (e *Editor) SaveOverwrite(nl int) (saveBytes int) {
+func (e *Editor) SaveOverwrite(nl nlCode) (saveBytes int) {
 	saveBytes = e.saveFile(e.FilePath, nl)
 	return
 }
 
 // 新しくファイルを保存
-func (e *Editor) SaveNew(filePath string, nl int) (saveBytes int) {
+func (e *Editor) SaveNew(filePath string, nl nlCode) (saveBytes int) {
 	saveBytes = e.saveFile(filePath, nl)
 	return
 }
 
 // ファイルを保存
-func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
+func (e *Editor) saveFile(filePath string, nl nlCode) (saveBytes int) {
 	fp, err := os.Create(filePath)
 	if err != nil {
 		panic(err)
@@ -149,7 +158,7 @@ func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
 			break
 		}
 		cnt++
-		buf += fmt.Sprintf("%s", string(tmp.Row.GetAll()))
+		buf += fmt.Sprintf("%s", string(tmp.Buf.GetAll()))
 		switch nl {
 		case NL_CRLF:
 			buf += "\r\n"
@@ -168,7 +177,7 @@ func (e *Editor) saveFile(filePath string, nl int) (saveBytes int) {
 	return
 }
 
-func (e *Editor) GetRowFromNum(num uint16) *RowNode {
+func (e *Editor) GetRowFromNum(num uint16) *common.RowNode {
 	pNode := e.Root
 	pNode = pNode.Next
 	var cntRow uint16 = 1

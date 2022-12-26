@@ -8,7 +8,7 @@ import (
 )
 
 type Window struct {
-	Term    UnixTerm
+	Term    *UnixTerm
 	KeyChan chan rune
 	Tabs    []*Editor
 	TabIdx  int
@@ -100,9 +100,9 @@ func (w *Window) DrawAll(num uint16) {
 			break
 		}
 		if pNode == cTab.CurrentNode {
-			w.DrawFocusRow(i+int(num), string(pNode.Row.GetAll()))
+			w.DrawFocusRow(i+int(num), string(pNode.Buf.GetAll()))
 		} else {
-			w.DrawUnfocusRow(i+int(num), string(pNode.Row.GetAll()))
+			w.DrawUnfocusRow(i+int(num), string(pNode.Buf.GetAll()))
 		}
 		pNode = pNode.Next
 	}
@@ -145,7 +145,7 @@ func (w *Window) Reflesh() {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.ClearAll()
-	w.DrawAll(5)
+	w.DrawAll(1)
 	w.UpdateStatusBar()
 	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }

@@ -4,10 +4,9 @@ import "os"
 
 func main() {
 	window := NewWindow()
-	tty := new(Tty)
 	window.Term.EnableASB()
-	tty.EnableRawMode()
-	defer tty.DisableRawMode()
+	window.Term.EnableRawMode()
+	defer window.Term.DisableRawMode()
 	defer window.Term.DisableASB()
 	defer window.Term.EnableCursor()
 
