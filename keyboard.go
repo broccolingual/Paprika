@@ -92,7 +92,7 @@ func (w *Window) readKeys() {
 }
 
 func (w *Window) detectKeys() {
-	w.Reflesh()
+	w.Reflesh('\\')
 	for {
 		r := <-w.KeyChan
 		cTab := w.Tabs[w.TabIdx] // Current Tab
@@ -135,21 +135,21 @@ func (w *Window) detectKeys() {
 			}
 			cTab.Rows++
 			cTab.SaveFlag = false
-			w.Reflesh()
+			w.Reflesh(r)
 		case CTRL_N:
 		case CTRL_O:
 		case CTRL_P:
 		case CTRL_Q:
 		case CTRL_R: // Prev Tab
 			w.PrevTab()
-			w.Reflesh()
+			w.Reflesh(r)
 		case CTRL_S: // Save
 			_ = cTab.SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(cTab.FilePath)), cTab.NL)
 			cTab.SaveFlag = true
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		case CTRL_T: // Next Tab
 			w.NextTab()
-			w.Reflesh()
+			w.Reflesh(r)
 		case CTRL_U:
 		case CTRL_V: // Paste
 		case CTRL_W:
@@ -160,7 +160,7 @@ func (w *Window) detectKeys() {
 				return
 			}
 			cTab.SaveFlag = false
-			w.Reflesh()
+			w.Reflesh(r)
 		case CTRL_Z: // Comment Out
 			if cTab.CurrentNode.Buf.Check(0, []rune("// ")) {
 				cTab.CurrentNode.Buf.EraseAll(0, 3)
@@ -172,14 +172,14 @@ func (w *Window) detectKeys() {
 			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			cTab.SaveFlag = false
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		case ESC:
 			return
 		case SPACE: // Space
 			cTab.Cursor.Col++
 			cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), r)
 			cTab.SaveFlag = false
-			w.Reflesh()
+			w.Reflesh(r)
 		case BACKSPACE: // Backspace
 			if cTab.Cursor.Col != 1 {
 				cTab.Cursor.Col--
@@ -187,7 +187,7 @@ func (w *Window) detectKeys() {
 				w.Term.ClearRow()
 				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 				cTab.SaveFlag = false
-				w.RefleshCursorOnly()
+				w.RefleshCursorOnly(r)
 			} else {
 				if cTab.Cursor.Row != 1 {
 					var tmp []rune
@@ -204,7 +204,7 @@ func (w *Window) detectKeys() {
 					}
 					cTab.Cursor.Col = origCursorPos
 					cTab.SaveFlag = false
-					w.Reflesh()
+					w.Reflesh(r)
 				}
 			}
 		case KEY_UP:
@@ -218,7 +218,7 @@ func (w *Window) detectKeys() {
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		case KEY_DOWN:
 			w.Term.ClearRow()
 			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
@@ -230,17 +230,17 @@ func (w *Window) detectKeys() {
 			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
 			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		case KEY_RIGHT:
 			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Buf.GetSize()) {
 				cTab.Cursor.Col++
 			}
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		case KEY_LEFT:
 			if cTab.Cursor.Col > 1 {
 				cTab.Cursor.Col--
 			}
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		default:
 			cTab.Cursor.Col++
 			cTab.CurrentNode.Buf.Insert(int(cTab.Cursor.Col-2), r)
@@ -273,7 +273,7 @@ func (w *Window) detectKeys() {
 			w.Term.ClearRow()
 			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
 			cTab.SaveFlag = false
-			w.RefleshCursorOnly()
+			w.RefleshCursorOnly(r)
 		}
 		w.Term.EnableCursor()
 	}

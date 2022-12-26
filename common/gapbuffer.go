@@ -53,6 +53,7 @@ func (gBuf *GapBuffer) GetSize() int {
 	return gBuf.size - gBuf.gapSize
 }
 
+// バッファのruneが一致するかの判定
 func (gBuf *GapBuffer) Check(idx int, data []rune) bool {
 	for i := 0; i < len(data); i++ {
 		if gBuf.Get(idx+i) != data[i] {
@@ -116,4 +117,12 @@ func (gBuf *GapBuffer) EraseAll(idx int, num int) {
 	for i := 0; i < num; i++ {
 		gBuf.Erase(idx)
 	}
+}
+
+// バッファが空かどうかの判定
+func (gBuf *GapBuffer) IsBlank() bool {
+	if gBuf.GetSize() == 0 {
+		return true
+	}
+	return false
 }

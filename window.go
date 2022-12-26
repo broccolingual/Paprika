@@ -108,7 +108,7 @@ func (w *Window) DrawAll(num uint16) {
 	}
 }
 
-func (w *Window) UpdateStatusBar() {
+func (w *Window) UpdateStatusBar(inputRune rune) {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
@@ -137,22 +137,22 @@ func (w *Window) UpdateStatusBar() {
 	w.Term.MoveCursorPos(1, uint16(w.MaxRows))
 	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m [%d/%d]", cTab.FilePath, w.TabIdx+1, len(w.Tabs))
 	fmt.Printf(" | Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
-	fmt.Printf(" | %s", sf)
+	fmt.Printf(" | %s | Unicode %U", sf, inputRune)
 	fmt.Print("\033[m")
 }
 
-func (w *Window) Reflesh() {
+func (w *Window) Reflesh(inputRune rune) {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.ClearAll()
 	w.DrawAll(1)
-	w.UpdateStatusBar()
+	w.UpdateStatusBar(inputRune)
 	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }
 
-func (w *Window) RefleshCursorOnly() {
+func (w *Window) RefleshCursorOnly(inputRune rune) {
 	cTab := w.Tabs[w.TabIdx]
 
-	w.UpdateStatusBar()
+	w.UpdateStatusBar(inputRune)
 	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }
