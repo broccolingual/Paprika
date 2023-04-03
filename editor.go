@@ -29,7 +29,7 @@ type Editor struct {
 	NL          nlCode          // 改行文字識別番号
 	Rows        uint16          // ファイルの行数 (65534行まで)
 	SaveFlag    bool            // セーブ済みフラグ
-	TopRow      *common.RowNode // 現在表示中の最上行
+	TopRow      uint16          // 現在表示中の最上行
 }
 
 // カーソル構造体
@@ -57,6 +57,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.NL = -1
 	editor.Rows = 0
 	editor.SaveFlag = false
+	editor.TopRow = 1
 	return
 }
 
@@ -178,7 +179,7 @@ func (e *Editor) saveFile(filePath string, nl nlCode) (saveBytes int) {
 	return
 }
 
-func (e *Editor) GetRowFromNum(num uint16) *common.RowNode {
+func (e *Editor) GetNodeFromLineNum(num uint16) *common.RowNode {
 	pNode := e.Root
 	pNode = pNode.Next
 	var cntRow uint16 = 1
@@ -193,4 +194,20 @@ func (e *Editor) GetRowFromNum(num uint16) *common.RowNode {
 		cntRow++
 	}
 	return nil
+}
+
+func (e *Editor) GetLineNumFromNode(tNode *common.RowNode) uint16 {
+	pNode := e.Root
+	pNode = pNode.Next
+	var cntRow uint16 = 1
+	for {
+		if pNode.IsRoot() {
+			break
+		} else if pNode == tNode {
+			return cntRow
+		}
+		pNode = pNode.Next
+		cntRow++
+	}
+	return 0
 }

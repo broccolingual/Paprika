@@ -221,16 +221,21 @@ func (w *Window) detectKeys() {
 			w.RefleshCursorOnly(r)
 		case KEY_DOWN:
 			w.Term.ClearRow()
-			w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
-			if cTab.Cursor.Row <= cTab.Rows {
-				cTab.Cursor.Row++
-				cTab.Cursor.Col = 1
-				cTab.MoveNextRow()
+			if cTab.GetLineNumFromNode(cTab.CurrentNode) >= cTab.TopRow+uint16(w.MaxRows)-1 {
+				cTab.TopRow++
+				w.Reflesh(r)
+			} else {
+				w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
+				if cTab.Cursor.Row <= cTab.Rows {
+					cTab.Cursor.Row++
+					cTab.Cursor.Col = 1
+					cTab.MoveNextRow()
+				}
+				w.Term.MoveCursorPos(1, cTab.Cursor.Row)
+				w.Term.ClearRow()
+				w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
+				w.RefleshCursorOnly(r)
 			}
-			w.Term.MoveCursorPos(1, cTab.Cursor.Row)
-			w.Term.ClearRow()
-			w.DrawFocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))
-			w.RefleshCursorOnly(r)
 		case KEY_RIGHT:
 			if cTab.Cursor.Col <= uint16(cTab.CurrentNode.Buf.GetSize()) {
 				cTab.Cursor.Col++

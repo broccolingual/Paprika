@@ -90,19 +90,20 @@ func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 }
 
 // TODO: 開始行とカーソルの位置が一致しない問題の修正
-func (w *Window) DrawAll(num uint16) {
+func (w *Window) DrawAll() {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.InitCursorPos()
-	pNode := cTab.GetRowFromNum(num)
+	topLineNum := cTab.TopRow
+	pNode := cTab.GetNodeFromLineNum(topLineNum)
 	for i := 0; i < w.MaxRows-1; i++ {
 		if pNode.IsRoot() {
 			break
 		}
 		if pNode == cTab.CurrentNode {
-			w.DrawFocusRow(i+int(num), string(pNode.Buf.GetAll()))
+			w.DrawFocusRow(i+int(topLineNum), string(pNode.Buf.GetAll()))
 		} else {
-			w.DrawUnfocusRow(i+int(num), string(pNode.Buf.GetAll()))
+			w.DrawUnfocusRow(i+int(topLineNum), string(pNode.Buf.GetAll()))
 		}
 		pNode = pNode.Next
 	}
@@ -145,7 +146,7 @@ func (w *Window) Reflesh(inputRune rune) {
 	cTab := w.Tabs[w.TabIdx]
 
 	w.Term.ClearAll()
-	w.DrawAll(1)
+	w.DrawAll()
 	w.UpdateStatusBar(inputRune)
 	w.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }
