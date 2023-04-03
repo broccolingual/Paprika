@@ -29,6 +29,7 @@ type Editor struct {
 	NL          nlCode          // 改行文字識別番号
 	Rows        uint16          // ファイルの行数 (65534行まで)
 	SaveFlag    bool            // セーブ済みフラグ
+	TopRow      *common.RowNode // 現在表示中の最上行
 }
 
 // カーソル構造体
