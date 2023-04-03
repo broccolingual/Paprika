@@ -89,24 +89,25 @@ func (w *Window) DrawUnfocusRow(lineNum int, rowData string) {
 	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, Highlighter(Tokenize(rowData), ".go", false))
 }
 
-// TODO: 開始行とカーソルの位置が一致しない問題の修正
-func (w *Window) DrawAll() {
+func (w *Window) DrawAllRow() {
 	cTab := w.Tabs[w.TabIdx]
+	startRowNum := cTab.TopRowNum
+	pNode := cTab.GetNodeFromLineNum(startRowNum)
 
 	w.Term.InitCursorPos()
-	topLineNum := cTab.TopRow
-	pNode := cTab.GetNodeFromLineNum(topLineNum)
-	for i := 0; i < w.MaxRows-1; i++ {
+	for i := 1; i < w.MaxRows; i++ {
 		if pNode.IsRoot() {
-			break
+			return
 		}
-		if pNode == cTab.CurrentNode {
-			w.DrawFocusRow(i+int(topLineNum), string(pNode.Buf.GetAll()))
-		} else {
-			w.DrawUnfocusRow(i+int(topLineNum), string(pNode.Buf.GetAll()))
-		}
+		w.Term.MoveCursorPos(1, uint16(i))
+		fmt.Printf("\033[38;5;239m%4d\033[m  %s", int(startRowNum)+i-1, Highlighter(Tokenize(string(pNode.Buf.GetAll())), ".go", false))
 		pNode = pNode.Next
 	}
+}
+
+// TODO: 開始行とカーソルの位置が一致しない問題の修正
+func (w *Window) DrawAll() {
+	w.DrawAllRow()
 }
 
 func (w *Window) UpdateStatusBar(inputRune rune) {

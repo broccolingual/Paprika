@@ -221,8 +221,8 @@ func (w *Window) detectKeys() {
 			w.RefleshCursorOnly(r)
 		case KEY_DOWN:
 			w.Term.ClearRow()
-			if cTab.GetLineNumFromNode(cTab.CurrentNode) >= cTab.TopRow+uint16(w.MaxRows)-1 {
-				cTab.TopRow++
+			if cTab.GetLineNumFromNode(cTab.CurrentNode) >= cTab.TopRowNum+uint16(w.MaxRows)-2 {
+				cTab.TopRowNum++
 				w.Reflesh(r)
 			} else {
 				w.DrawUnfocusRow(int(cTab.Cursor.Row), string(cTab.CurrentNode.Buf.GetAll()))

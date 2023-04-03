@@ -29,7 +29,7 @@ type Editor struct {
 	NL          nlCode          // 改行文字識別番号
 	Rows        uint16          // ファイルの行数 (65534行まで)
 	SaveFlag    bool            // セーブ済みフラグ
-	TopRow      uint16          // 現在表示中の最上行
+	TopRowNum   uint16          // 現在表示中の最上行
 }
 
 // カーソル構造体
@@ -57,7 +57,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.NL = -1
 	editor.Rows = 0
 	editor.SaveFlag = false
-	editor.TopRow = 1
+	editor.TopRowNum = 1
 	return
 }
 
