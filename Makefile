@@ -6,10 +6,10 @@ clean:
 install:
 	# install 3rd party library
 	# go install ~
-	go generate
-	go mod download
+	# go mod download
+	go mod tidy
 
-run: 
+run:
 	go run main.go window.go keyboard.go editor.go term.go syntax.go
 
 build: install clean
