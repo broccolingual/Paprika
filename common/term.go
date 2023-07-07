@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"fmt"
@@ -89,12 +89,12 @@ func (ut *UnixTerm) SetAttr(code string) {
 }
 
 // Alternative Screen Bufferの有効化
-func (ut *UnixTerm) EnableASB() {
+func (ut *UnixTerm) EnableAlternativeScreenBuffer() {
 	ut.SetAttr("\033[?1049h")
 }
 
 // Alternative Screen Bufferの無効化
-func (ut *UnixTerm) DisableASB() {
+func (ut *UnixTerm) DisableAlternativeScreenBuffer() {
 	ut.SetAttr("\033[?1049l")
 }
 

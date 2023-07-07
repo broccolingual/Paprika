@@ -10,7 +10,7 @@ install:
 	go mod tidy
 
 run:
-	go run main.go window.go keyboard.go editor.go term.go syntax.go
+	go run main.go view.go event.go keyboard.go editor.go syntax.go
 
 build: install clean
-	GOOS=linux go build -ldflags="-s -w -buildid=" -trimpath -o bin/main main.go window.go keyboard.go editor.go term.go syntax.go
+	GOOS=linux go build -ldflags="-s -w -buildid=" -trimpath -o bin/main main.go view.go event.go keyboard.go editor.go syntax.go

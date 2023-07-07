@@ -12,12 +12,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	window := NewWindow()
-	window.Term.EnableASB()
-	window.Term.EnableRawMode()
-	defer window.Term.DisableRawMode()
-	defer window.Term.DisableASB()
-	defer window.Term.EnableCursor()
+	view := NewView()
+	view.Term.EnableAlternativeScreenBuffer()
+	view.Term.EnableRawMode()
+	defer view.Term.DisableRawMode()
+	defer view.Term.DisableAlternativeScreenBuffer()
+	defer view.Term.EnableCursor()
 
 	// 引数のパスをタブに追加
 	for i, path := range os.Args {
@@ -26,17 +26,18 @@ func main() {
 		}
 		pathInfo, _ := os.Stat(path)
 		if pathInfo.IsDir() == false {
-			window.AddTab(path)
+			view.AddTab(path)
 		} else {
 			// ディレクトリの場合の処理
 		}
 	}
 
 	// 全てのタブのファイルをロード
-	for _, tab := range window.Tabs {
+	for _, tab := range view.Tabs {
 		tab.LoadFile()
 	}
 
-	go window.readKeys() // キー入力の読み取り用goroutine
-	window.detectKeys()  // キー入力の識別
+	go view.scanInput() // キー入力の読み取り用goroutine
+	go view.Event.UpdateWinSize() // 画面サイズの更新
+	view.MainLoop() //メインループ
 }
