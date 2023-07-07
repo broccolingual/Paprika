@@ -27,6 +27,23 @@ type WinSize struct {
 	Ypixel uint16
 }
 
+func (e *Event) ScanInput() {
+	buf := make([]byte, 64)
+	for {
+		if n, err := os.Stdin.Read(buf); err == nil {
+			b := buf[:n]
+			for {
+				r, n := parseKey(b)
+				if n == 0 {
+					break
+				}
+				e.Key <- r
+				b = b[n:]
+			}
+		}
+	}
+}
+
 // Get console window size
 func (e *Event) UpdateWinSize() {
 	for {

@@ -37,7 +37,7 @@ func main() {
 		tab.LoadFile()
 	}
 
-	go view.scanInput() // キー入力の読み取り用goroutine
+	go view.Event.ScanInput() // キー入力の読み取り用goroutine
 	go view.Event.UpdateWinSize() // 画面サイズの更新
 	view.MainLoop() //メインループ
 }

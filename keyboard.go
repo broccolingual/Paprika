@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"unicode/utf8"
 )
@@ -72,23 +71,6 @@ func parseKey(b []byte) (rune, int) {
 		}
 	}
 	return utf8.DecodeRune(b)
-}
-
-func (v *View) scanInput() {
-	buf := make([]byte, 64)
-	for {
-		if n, err := os.Stdin.Read(buf); err == nil {
-			b := buf[:n]
-			for {
-				r, n := parseKey(b)
-				if n == 0 {
-					break
-				}
-				v.Event.Key <- r
-				b = b[n:]
-			}
-		}
-	}
 }
 
 func (v *View) processInput(r rune) uint8 {
