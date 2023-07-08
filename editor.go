@@ -17,19 +17,17 @@ const LINE_BUF_MAX = 255 // 1行のバッファサイズ
 type Editor struct {
 	FilePath    string          // ファイルのパス
 	Cursor      *Cursor         // 現在のカーソル位置
-	Root        *common.DLNode // 行ノードのルート(ダミーノード)
-	CurrentNode *common.DLNode // 現在の行ノード
+	Lines       []*common.GapBuffer // 行リスト
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
-	Rows        uint16          // ファイルの行数 (65534行まで)
 	IsSaved     bool            // セーブ済みフラグ
 	TopRowNum   uint16          // 現在表示中の最上行
 }
 
 // カーソル構造体
 type Cursor struct {
-	Row uint16
-	Col uint16
+	Row int
+	Col int
 }
 
 // 新しいカーソルの取得
@@ -45,26 +43,26 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
 	editor.Cursor = NewCursor()
-	editor.Root = common.NewRootNode()
-	editor.CurrentNode = editor.Root
+	editor.Lines = make([]*common.GapBuffer, 0)
 	editor.TabSize = tabSize
 	editor.NL = -1
-	editor.Rows = 0
 	editor.IsSaved = false
 	editor.TopRowNum = 1
 	return
 }
 
 // 行ノードのポインタを1つ進める
-func (e *Editor) MoveNextRow() *common.DLNode {
-	e.CurrentNode = e.CurrentNode.Next()
-	return e.CurrentNode
+func (e *Editor) MoveNextRow() {
+	if e.Cursor.Row < len(e.Lines) {
+		e.Cursor.Row++
+	}
 }
 
 // 行ノードのポインタを1つ戻す
-func (e *Editor) MovePrevRow() *common.DLNode {
-	e.CurrentNode = e.CurrentNode.Prev()
-	return e.CurrentNode
+func (e *Editor) MovePrevRow() {
+	if e.Cursor.Row > 1 {
+		e.Cursor.Row--
+	}
 }
 
 // エディタに指定されたパスのファイルをロードして、行ノードを構成
@@ -81,13 +79,13 @@ func (e *Editor) LoadFile() {
 		tabStr += " "
 	}
 
-	rowsCnt := 0
 	reader := bufio.NewReaderSize(fp, LINE_BUF_MAX)
+	cnt := 0
 	for {
 		line, err := reader.ReadString(byte('\n'))                    // '\n'で分割
 		replacedStr := strings.ReplaceAll(string(line), "\t", tabStr) // タブをスペースに変換
 		replacedRune := []rune(replacedStr)
-		if rowsCnt == 0 { // 改行文字の判定
+		if cnt == 0 { // 改行文字の判定
 			e.NL = utils.GetNLCode(replacedRune)
 		}
 		// TODO: 改行文字が混在している時の対応
@@ -103,16 +101,15 @@ func (e *Editor) LoadFile() {
 			}
 		}
 
-		e.Root.Prev().Insert(replacedRune, LINE_BUF_MAX)
+		e.Lines = append(e.Lines, common.NewGapBuffer(replacedRune, LINE_BUF_MAX))
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			panic(err)
 		}
-		rowsCnt++
+		cnt++
 	}
 	e.MoveNextRow()
-	e.Rows = uint16(rowsCnt)
 }
 
 // エディタに指定されたパスで上書き保存
@@ -138,13 +135,9 @@ func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 	var buf string
 
 	cnt := 0
-	tmp := e.Root.Next()
-	for {
-		if tmp == e.Root {
-			break
-		}
+	for _, row := range e.Lines {
 		cnt++
-		buf += fmt.Sprintf("%s", string(tmp.GetBuf().GetAll()))
+		buf += fmt.Sprintf("%s", string(row.GetAll()))
 		switch nl {
 		case utils.CRLF:
 			buf += "\r\n"
@@ -155,7 +148,6 @@ func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 		default:
 			buf += "\n"
 		}
-		tmp = tmp.Next()
 	}
 
 	saveBytes, err = fp.Write([]byte(buf))
@@ -163,37 +155,4 @@ func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 		panic(err)
 	}
 	return
-}
-
-func (e *Editor) GetNodeFromLineNum(num uint16) *common.DLNode {
-	pNode := e.Root
-	pNode = pNode.Next()
-	var cntRow uint16 = 1
-	for {
-		if pNode.IsRoot() {
-			break
-		}
-		if cntRow == num {
-			return pNode
-		}
-		pNode = pNode.Next()
-		cntRow++
-	}
-	return nil
-}
-
-func (e *Editor) GetLineNumFromNode(tNode *common.DLNode) uint16 {
-	pNode := e.Root
-	pNode = pNode.Next()
-	var cntRow uint16 = 1
-	for {
-		if pNode.IsRoot() {
-			break
-		} else if pNode == tNode {
-			return cntRow
-		}
-		pNode = pNode.Next()
-		cntRow++
-	}
-	return 0
 }

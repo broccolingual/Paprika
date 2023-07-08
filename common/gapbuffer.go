@@ -54,10 +54,18 @@ func (gBuf *GapBuffer) GetSize() int {
 	return gBuf.size - gBuf.gapSize
 }
 
+// バッファが空かどうかの判定
+func (gBuf *GapBuffer) IsBlank() bool {
+	if gBuf.GetSize() == 0 {
+		return true
+	}
+	return false
+}
+
 // バッファのruneが一致するかの判定
 func (gBuf *GapBuffer) Check(idx int, data []rune) bool {
-	for i := 0; i < len(data); i++ {
-		if gBuf.Get(idx+i) != data[i] {
+	for i, elm := range data {
+		if gBuf.Get(idx+i) != elm {
 			return false
 		}
 	}
@@ -98,8 +106,8 @@ func (gBuf *GapBuffer) Insert(idx int, ch rune) bool {
 
 // バッファに複数のruneを挿入
 func (gBuf *GapBuffer) InsertAll(idx int, data []rune) {
-	for i := 0; i < len(data); i++ {
-		gBuf.Insert(i+idx, data[i])
+	for i, elm := range data {
+		gBuf.Insert(idx+i, elm)
 	}
 }
 
@@ -120,12 +128,12 @@ func (gBuf *GapBuffer) EraseAll(idx int, num int) {
 	}
 }
 
-// バッファが空かどうかの判定
-func (gBuf *GapBuffer) IsBlank() bool {
-	if gBuf.GetSize() == 0 {
-		return true
-	}
-	return false
+// バッファの末尾にruneを追加
+func (gBuf *GapBuffer) Append(ch rune) bool {
+	return gBuf.Insert(gBuf.GetSize(), ch)
 }
 
-// TODO: Append関数の追加
+// バッファの末尾に複数のruneを追加
+func (gBuf *GapBuffer) AppendAll(data []rune) {
+	gBuf.InsertAll(gBuf.GetSize(), data)
+}

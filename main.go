@@ -36,5 +36,6 @@ func main() {
 	for _, tab := range view.Tabs {
 		tab.LoadFile()
 	}
+	
 	view.MainLoop() //メインループ
 }

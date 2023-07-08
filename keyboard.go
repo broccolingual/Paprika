@@ -77,6 +77,7 @@ func (v *View) processInput(r rune) uint8 {
 	v.Reflesh('\\')
 	cTab := v.Tabs[v.TabIdx] // Current Tab
 	v.Term.DisableCursor()
+	defer v.Term.EnableCursor()
 	switch r {
 	case CTRL_A:
 	case CTRL_B:
@@ -260,6 +261,5 @@ func (v *View) processInput(r rune) uint8 {
 		cTab.IsSaved = false
 		v.RefleshCursorOnly(r)
 	}
-	v.Term.EnableCursor()
 	return 0
 }
