@@ -8,13 +8,7 @@ import (
 	"strings"
 
 	"golang-text-editor/common"
-)
-
-type nlCode int // 改行文字タイプの定義
-
-const (
-	NL_LF nlCode = iota
-	NL_CRLF
+	"golang-text-editor/utils"
 )
 
 const LINE_BUF_MAX = 255 // 1行のバッファサイズ
@@ -23,12 +17,12 @@ const LINE_BUF_MAX = 255 // 1行のバッファサイズ
 type Editor struct {
 	FilePath    string          // ファイルのパス
 	Cursor      *Cursor         // 現在のカーソル位置
-	Root        *common.RowNode // 行ノードのルート(ダミーノード)
-	CurrentNode *common.RowNode // 現在の行ノード
+	Root        *common.DLNode // 行ノードのルート(ダミーノード)
+	CurrentNode *common.DLNode // 現在の行ノード
 	TabSize     uint8           // タブサイズ (0~255)
-	NL          nlCode          // 改行文字識別番号
+	NL          utils.NLCode          // 改行文字識別番号
 	Rows        uint16          // ファイルの行数 (65534行まで)
-	SaveFlag    bool            // セーブ済みフラグ
+	IsSaved     bool            // セーブ済みフラグ
 	TopRowNum   uint16          // 現在表示中の最上行
 }
 
@@ -56,31 +50,20 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.Rows = 0
-	editor.SaveFlag = false
+	editor.IsSaved = false
 	editor.TopRowNum = 1
 	return
 }
 
-// 行から改行文字を判定 (-1は不明の改行文字)
-func GetNL(row []rune) nlCode {
-	if row[len(row)-1] == rune('\n') {
-		if row[len(row)-2] == rune('\r') {
-			return NL_CRLF
-		}
-		return NL_LF
-	}
-	return -1
-}
-
 // 行ノードのポインタを1つ進める
-func (e *Editor) MoveNextRow() *common.RowNode {
-	e.CurrentNode = e.CurrentNode.Next
+func (e *Editor) MoveNextRow() *common.DLNode {
+	e.CurrentNode = e.CurrentNode.Next()
 	return e.CurrentNode
 }
 
 // 行ノードのポインタを1つ戻す
-func (e *Editor) MovePrevRow() *common.RowNode {
-	e.CurrentNode = e.CurrentNode.Prev
+func (e *Editor) MovePrevRow() *common.DLNode {
+	e.CurrentNode = e.CurrentNode.Prev()
 	return e.CurrentNode
 }
 
@@ -105,21 +88,22 @@ func (e *Editor) LoadFile() {
 		replacedStr := strings.ReplaceAll(string(line), "\t", tabStr) // タブをスペースに変換
 		replacedRune := []rune(replacedStr)
 		if rowsCnt == 0 { // 改行文字の判定
-			e.NL = GetNL(replacedRune)
+			e.NL = utils.GetNLCode(replacedRune)
 		}
 		// TODO: 改行文字が混在している時の対応
 		switch e.NL { // 改行文字の削除
-		case NL_CRLF:
+		case utils.CRLF:
 			if len(replacedRune) >= 2 {
 				replacedRune = replacedRune[:len(replacedRune)-2]
 			}
-		case NL_LF:
+		case utils.CR:
+		case utils.LF:
 			if len(replacedRune) >= 1 {
 				replacedRune = replacedRune[:len(replacedRune)-1]
 			}
 		}
 
-		e.Root.Prev.Insert(replacedRune, LINE_BUF_MAX)
+		e.Root.Prev().Insert(replacedRune, LINE_BUF_MAX)
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -132,19 +116,19 @@ func (e *Editor) LoadFile() {
 }
 
 // エディタに指定されたパスで上書き保存
-func (e *Editor) SaveOverwrite(nl nlCode) (saveBytes int) {
+func (e *Editor) SaveOverwrite(nl utils.NLCode) (saveBytes int) {
 	saveBytes = e.saveFile(e.FilePath, nl)
 	return
 }
 
 // 新しくファイルを保存
-func (e *Editor) SaveNew(filePath string, nl nlCode) (saveBytes int) {
+func (e *Editor) SaveNew(filePath string, nl utils.NLCode) (saveBytes int) {
 	saveBytes = e.saveFile(filePath, nl)
 	return
 }
 
 // ファイルを保存
-func (e *Editor) saveFile(filePath string, nl nlCode) (saveBytes int) {
+func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 	fp, err := os.Create(filePath)
 	if err != nil {
 		panic(err)
@@ -154,22 +138,24 @@ func (e *Editor) saveFile(filePath string, nl nlCode) (saveBytes int) {
 	var buf string
 
 	cnt := 0
-	tmp := e.Root.Next
+	tmp := e.Root.Next()
 	for {
 		if tmp == e.Root {
 			break
 		}
 		cnt++
-		buf += fmt.Sprintf("%s", string(tmp.Buf.GetAll()))
+		buf += fmt.Sprintf("%s", string(tmp.GetBuf().GetAll()))
 		switch nl {
-		case NL_CRLF:
+		case utils.CRLF:
 			buf += "\r\n"
-		case NL_LF:
+		case utils.CR:
+			buf += "\r"
+		case utils.LF:
 			buf += "\n"
 		default:
 			buf += "\n"
 		}
-		tmp = tmp.Next
+		tmp = tmp.Next()
 	}
 
 	saveBytes, err = fp.Write([]byte(buf))
@@ -179,9 +165,9 @@ func (e *Editor) saveFile(filePath string, nl nlCode) (saveBytes int) {
 	return
 }
 
-func (e *Editor) GetNodeFromLineNum(num uint16) *common.RowNode {
+func (e *Editor) GetNodeFromLineNum(num uint16) *common.DLNode {
 	pNode := e.Root
-	pNode = pNode.Next
+	pNode = pNode.Next()
 	var cntRow uint16 = 1
 	for {
 		if pNode.IsRoot() {
@@ -190,15 +176,15 @@ func (e *Editor) GetNodeFromLineNum(num uint16) *common.RowNode {
 		if cntRow == num {
 			return pNode
 		}
-		pNode = pNode.Next
+		pNode = pNode.Next()
 		cntRow++
 	}
 	return nil
 }
 
-func (e *Editor) GetLineNumFromNode(tNode *common.RowNode) uint16 {
+func (e *Editor) GetLineNumFromNode(tNode *common.DLNode) uint16 {
 	pNode := e.Root
-	pNode = pNode.Next
+	pNode = pNode.Next()
 	var cntRow uint16 = 1
 	for {
 		if pNode.IsRoot() {
@@ -206,7 +192,7 @@ func (e *Editor) GetLineNumFromNode(tNode *common.RowNode) uint16 {
 		} else if pNode == tNode {
 			return cntRow
 		}
-		pNode = pNode.Next
+		pNode = pNode.Next()
 		cntRow++
 	}
 	return 0

@@ -1,5 +1,6 @@
 package common
 
+// TODO: 文字単位のイテレータの実装
 type GapBuffer _GapBuffer
 
 // ギャップバッファ構造体
@@ -126,3 +127,5 @@ func (gBuf *GapBuffer) IsBlank() bool {
 	}
 	return false
 }
+
+// TODO: Append関数の追加

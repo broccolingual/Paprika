@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"golang-text-editor/common"
+	"golang-text-editor/utils"
 )
 
 type View struct {
@@ -25,18 +26,26 @@ func NewView() *View {
 }
 
 func (v *View) MainLoop() {
+	e := v.Event
+	go e.ScanInput() // キー入力の読み取り用
+	go e.UpdateWinSize() // 画面サイズの更新
+	go e.NotifySignal() // シグナルの読み取り
+
 	v.Reflesh('\\')
+
 	Loop:
 		for {
 			select {
-			case r := <-v.Event.Key: // キーイベント受け取り
+			case r := <-e.Key: // キーイベント受け取り
 				exitCode := v.processInput(r)
 				if exitCode != 0 {
 					break Loop
 				}
 			// TODO: キー入力がないと画面サイズが更新されない問題の修正
-			case ws := <-v.Event.WindowSize: // 画面サイズ変更イベント受け取り
+			case ws := <-e.WindowSize: // 画面サイズ変更イベント受け取り
 				v.ChangeWinSize(ws)
+			// TODO: 強制終了時の処理
+			case <- e.Signal: // OSシグナルの受け取り
 			}
 		}
 }
@@ -104,8 +113,8 @@ func (v *View) DrawAllRow() {
 			return
 		}
 		v.Term.MoveCursorPos(1, uint16(i))
-		fmt.Printf("\033[38;5;239m%4d\033[m  %s", int(startRowNum)+i-1, Highlighter(Tokenize(string(pNode.Buf.GetAll())), ".go", false))
-		pNode = pNode.Next
+		fmt.Printf("\033[38;5;239m%4d\033[m  %s", int(startRowNum)+i-1, Highlighter(Tokenize(string(pNode.GetBuf().GetAll())), ".go", false))
+		pNode = pNode.Next()
 	}
 }
 
@@ -125,15 +134,17 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 	}
 	var nl string
 	switch cTab.NL {
-	case NL_CRLF:
+	case utils.CRLF:
 		nl = "CRLF"
-	case NL_LF:
+	case utils.CR:
+		nl = "CR"
+	case utils.LF:
 		nl = "LF"
 	default:
 		nl = "Unknown"
 	}
 	var sf string
-	switch cTab.SaveFlag {
+	switch cTab.IsSaved {
 	case true:
 		sf = "Saved"
 	case false:

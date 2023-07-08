@@ -1,7 +1,11 @@
-- `main.go` : メイン関数
-- `editor.go` : ファイル管理用の構造体
-- `gapbuffer.go` : 行単位のギャップバッファ
-- `keyboard.go` : キーボードからの入力受け取り
-- `rowslist.go` : 行単位の双方向連結リスト
-- `term.go` : Unixのターミナルの設定
-- `window.go` : ウインドウ管理用の構造体
+<h1 style="text-align: center;">Xanadu</h1>
+<h3 style="text-align: center;">CUI Editor for Linux made by Golang</h3>
+
+## How to Use
+
+
+## License
+GNU General Public License
+
+## Credit
+

@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/signal"
 	"syscall"
 	"unsafe"
 	"time"
@@ -10,12 +11,14 @@ import (
 type Event struct {
 	Key chan rune
 	WindowSize chan WinSize
+	Signal chan os.Signal
 }
 
 func NewEvent() *Event {
 	e := new(Event)
 	e.Key = make(chan rune)
 	e.WindowSize = make(chan WinSize)
+	e.Signal = make(chan os.Signal)
 	return e
 }
 
@@ -52,4 +55,8 @@ func (e *Event) UpdateWinSize() {
 		e.WindowSize <- ws
 		time.Sleep(time.Millisecond * 100)
 	}
+}
+
+func (e *Event) NotifySignal() {
+	signal.Notify(e.Signal, os.Interrupt)
 }

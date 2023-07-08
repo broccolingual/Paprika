@@ -13,4 +13,4 @@ run:
 	go run main.go view.go event.go keyboard.go editor.go syntax.go
 
 build: install clean
-	GOOS=linux go build -ldflags="-s -w -buildid=" -trimpath -o bin/main main.go view.go event.go keyboard.go editor.go syntax.go
+	GOOS=linux go build -ldflags="-s -w -buildid=" -trimpath -o bin/xanadu main.go view.go event.go keyboard.go editor.go syntax.go
