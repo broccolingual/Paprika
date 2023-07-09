@@ -101,6 +101,11 @@ func (v *View) PrevTab() bool {
 	return v.MoveTab(v.TabIdx - 1)
 }
 
+// 現在のタブのオブジェクトの取得
+func (v *View) GetCurrentTab() *Editor {
+	return v.Tabs[v.TabIdx]
+}
+
 // TODO: 描画関数の修正
 func (v *View) DrawFocusRow(lineNum int, rowData string) {
 	v.Term.MoveCursorPos(1, uint16(lineNum))
@@ -133,8 +138,7 @@ func (v *View) DrawAll() {
 }
 
 func (v *View) UpdateStatusBar(inputRune rune) {
-	cTab := v.Tabs[v.TabIdx]
-
+	cTab := v.GetCurrentTab()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.ClearRow()
 	fmt.Print("\033[48;5;25m")
@@ -168,8 +172,7 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 }
 
 func (v *View) Reflesh(inputRune rune) {
-	cTab := v.Tabs[v.TabIdx]
-
+	cTab := v.GetCurrentTab()
 	v.Term.ClearAll()
 	v.DrawAll()
 	v.UpdateStatusBar(inputRune)
@@ -177,8 +180,7 @@ func (v *View) Reflesh(inputRune rune) {
 }
 
 func (v *View) RefleshCursorOnly(inputRune rune) {
-	cTab := v.Tabs[v.TabIdx]
-
+	cTab := v.GetCurrentTab()
 	v.UpdateStatusBar(inputRune)
 	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
 }

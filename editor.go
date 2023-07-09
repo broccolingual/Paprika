@@ -51,17 +51,31 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	return
 }
 
-// 行ノードのポインタを1つ進める
+// 行を1つ進める
 func (e *Editor) MoveNextRow() {
 	if e.Cursor.Row < uint16(len(e.Lines)) {
 		e.Cursor.Row++
 	}
 }
 
-// 行ノードのポインタを1つ戻す
+// 行を1つ戻す
 func (e *Editor) MovePrevRow() {
 	if e.Cursor.Row > 1 {
 		e.Cursor.Row--
+	}
+}
+
+// 列を1つ進める
+func (e *Editor) MoveNextCol() {
+	if e.Cursor.Col < uint16(e.Lines[e.Cursor.Row-1].GetSize()) {
+		e.Cursor.Col++
+	}
+}
+
+// 列を1つ戻す
+func (e *Editor) MovePrevCol() {
+	if e.Cursor.Col > 1 {
+		e.Cursor.Col--
 	}
 }
 
@@ -109,7 +123,6 @@ func (e *Editor) LoadFile() {
 		}
 		cnt++
 	}
-	e.MoveNextRow()
 }
 
 // エディタに指定されたパスで上書き保存

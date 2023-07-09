@@ -74,8 +74,7 @@ func parseKey(b []byte) (rune, int) {
 }
 
 func (v *View) processInput(r rune) uint8 {
-	cTab := v.Tabs[v.TabIdx] // Current Tab
-	v.Reflesh('\\')
+	cTab := v.GetCurrentTab() // Current Tab
 	v.Term.DisableCursor()
 	defer v.Term.EnableCursor()
 	switch r {
@@ -129,7 +128,11 @@ func (v *View) processInput(r rune) uint8 {
 		cTab.MoveNextRow()
 		v.RefleshCursorOnly(r)
 	case KEY_RIGHT:
+		cTab.MoveNextCol()
+		v.RefleshCursorOnly(r)
 	case KEY_LEFT:
+		cTab.MovePrevCol()
+		v.RefleshCursorOnly(r)
 	default:
 		switch r { // Completion
 		case rune('('):
