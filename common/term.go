@@ -44,14 +44,17 @@ func tcGetAttr(fd uintptr) *termios {
 }
 
 // Rawモード/非カノニカルモードの有効化
+// https://linuxjm.osdn.jp/html/LDP_man-pages/man3/termios.3.html
 // termios - Iflag
 // ^BRKINT: BrakeをNullバイトとして読み込む
 // INPCK: 入力のパリティチェック有効化
 // ICRNL: ^IGNCRの場合、CRをNLで置換
 // ISTRIP: 8bit目を落とす
 // IXON: 出力のXON/XOFFフロー制御の有効化
+
 // termios - Cflag
 // CS8: 文字サイズを8bitに指定
+
 // termios - Lflag
 // ECHO: 入力された文字をエコー
 // ICANON: カノニカルモードの有効化
@@ -61,9 +64,11 @@ func (ut *UnixTerm) EnableRawMode() {
 	ut.origTermSetting = tcGetAttr(os.Stdin.Fd())
 	var raw termios
 	raw = *ut.origTermSetting
-	raw.Iflag &^= syscall.BRKINT | syscall.ICRNL | syscall.INPCK | syscall.ISTRIP | syscall.IXON
+	raw.Iflag &^= syscall.IGNBRK | syscall.BRKINT | syscall.PARMRK | syscall.ISTRIP | syscall.INLCR | syscall.IGNCR | syscall.ICRNL | syscall.IXON
+	raw.Cflag &^= syscall.CSIZE | syscall.PARENB
 	raw.Cflag |= syscall.CS8
-	raw.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
+	raw.Oflag &^= syscall.OPOST
+	raw.Lflag &^= syscall.ECHO | syscall.ECHONL | syscall.ICANON | syscall.ISIG | syscall.IEXTEN
 	raw.Cc[syscall.VMIN+1] = 0
 	raw.Cc[syscall.VTIME+1] = 1
 	if e := tcSetAttr(os.Stdin.Fd(), &raw); e != nil {
