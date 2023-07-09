@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	UPDATE_WINSIZE_INTERVAL = time.Millisecond * 500
+)
+
 type Event struct {
 	Key chan rune
 	WindowSize chan WinSize
@@ -22,7 +26,7 @@ func NewEvent() *Event {
 	return e
 }
 
-// Define winsize object
+// ウィンドウサイズオブジェクトの定義
 type WinSize struct {
 	Row    uint16
 	Col    uint16
@@ -30,6 +34,7 @@ type WinSize struct {
 	Ypixel uint16
 }
 
+// 入力キーの読み取り
 func (e *Event) ScanInput() {
 	buf := make([]byte, 64)
 	for {
@@ -47,16 +52,17 @@ func (e *Event) ScanInput() {
 	}
 }
 
-// Get console window size
-func (e *Event) UpdateWinSize() {
+// コンソールのウィンドウサイズの取得
+func (e *Event) GetWinSize() {
 	for {
 		var ws WinSize
 		_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, os.Stdout.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
 		e.WindowSize <- ws
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(UPDATE_WINSIZE_INTERVAL)
 	}
 }
 
+// OSシグナルの通知
 func (e *Event) NotifySignal() {
 	signal.Notify(e.Signal, os.Interrupt)
 }

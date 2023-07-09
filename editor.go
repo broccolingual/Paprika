@@ -21,13 +21,13 @@ type Editor struct {
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ
-	TopRowNum   uint16          // 現在表示中の最上行
+	TopLineNum  uint          // 現在表示中の最上行
 }
 
 // カーソル構造体
 type Cursor struct {
-	Row int
-	Col int
+	Row uint16
+	Col uint16
 }
 
 // 新しいカーソルの取得
@@ -47,13 +47,13 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.IsSaved = false
-	editor.TopRowNum = 1
+	editor.TopLineNum = 1
 	return
 }
 
 // 行ノードのポインタを1つ進める
 func (e *Editor) MoveNextRow() {
-	if e.Cursor.Row < len(e.Lines) {
+	if e.Cursor.Row < uint16(len(e.Lines)) {
 		e.Cursor.Row++
 	}
 }

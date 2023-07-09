@@ -14,6 +14,8 @@ type _UnixTerm struct {
 	origTermSetting *termios
 }
 
+// TODO: デフォルトのtermiosライブラリへの置換
+
 // Define termios(unix) object
 type termios struct {
 	Iflag  uint32

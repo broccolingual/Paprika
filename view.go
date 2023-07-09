@@ -12,8 +12,8 @@ type View struct {
 	Event	  *Event
 	Tabs    []*Editor
 	TabIdx  int
-	MaxRows int
-	MaxCols int
+	MaxRows uint16
+	MaxCols uint16
 }
 
 func NewView() *View {
@@ -28,10 +28,8 @@ func NewView() *View {
 func (v *View) MainLoop() {
 	e := v.Event
 	go e.ScanInput() // キー入力の読み取り用
-	go e.UpdateWinSize() // 画面サイズの更新
+	go e.GetWinSize() // 画面サイズの更新
 	go e.NotifySignal() // シグナルの読み取り
-
-	v.Reflesh('\\')
 
 	Loop:
 		for {
@@ -41,24 +39,38 @@ func (v *View) MainLoop() {
 				if exitCode != 0 {
 					break Loop
 				}
-			// TODO: キー入力がないと画面サイズが更新されない問題の修正
 			case ws := <-e.WindowSize: // 画面サイズ変更イベント受け取り
-				v.ChangeWinSize(ws)
-			// TODO: 強制終了時の処理
+				if v.IsWinSizeChanged(ws) {
+					v.ChangeWinSize(ws)
+					v.Reflesh('\\')
+				}
 			case <- e.Signal: // OSシグナルの受け取り
+				// termiosでシグナルを無効化しているため動作しない
 			}
 		}
 }
 
-func (v *View) ChangeWinSize(ws WinSize) {
-	v.MaxRows = int(ws.Row)
-	v.MaxCols = int(ws.Col)
+// 画面サイズが変更されたかを検知
+func (v *View) IsWinSizeChanged(ws WinSize) (isChanged bool) {
+	isChanged = false
+	if v.MaxRows != ws.Row || v.MaxCols != ws.Col {
+		isChanged = true
+	}
+	return
 }
 
+// 画面サイズの変更
+func (v *View) ChangeWinSize(ws WinSize) {
+	v.MaxRows = ws.Row
+	v.MaxCols = ws.Col
+}
+
+// タブの追加
 func (v *View) AddTab(filePath string) {
 	v.Tabs = append(v.Tabs, NewEditor(filePath, 4))
 }
 
+// タブの削除
 func (v *View) DeleteTab() bool {
 	v.Tabs = append(v.Tabs[:v.TabIdx], v.Tabs[v.TabIdx+1:]...)
 	if len(v.Tabs) == 0 {
@@ -70,6 +82,7 @@ func (v *View) DeleteTab() bool {
 	return true
 }
 
+// 指定したインデックスのタブに移動
 func (v *View) MoveTab(idx int) bool {
 	if idx >= 0 && idx < len(v.Tabs) {
 		v.TabIdx = idx
@@ -78,18 +91,21 @@ func (v *View) MoveTab(idx int) bool {
 	return false
 }
 
+// 次のタブへ移動
 func (v *View) NextTab() bool {
 	return v.MoveTab(v.TabIdx + 1)
 }
 
+// 前のタブへ移動
 func (v *View) PrevTab() bool {
 	return v.MoveTab(v.TabIdx - 1)
 }
 
+// TODO: 描画関数の修正
 func (v *View) DrawFocusRow(lineNum int, rowData string) {
 	v.Term.MoveCursorPos(1, uint16(lineNum))
 	fmt.Printf("\033[48;5;235m")
-	for i := 0; i < v.MaxCols; i++ {
+	for i := 0; i < int(v.MaxCols); i++ {
 		fmt.Printf(" ")
 	}
 	fmt.Printf("\033[m")
@@ -104,17 +120,10 @@ func (v *View) DrawUnfocusRow(lineNum int, rowData string) {
 
 func (v *View) DrawAllRow() {
 	cTab := v.Tabs[v.TabIdx]
-	startRowNum := cTab.TopRowNum
-	pNode := cTab.GetNodeFromLineNum(startRowNum)
-
 	v.Term.InitCursorPos()
-	for i := 1; i < v.MaxRows; i++ {
-		if pNode.IsRoot() {
-			return
-		}
+	for i := 1; i < int(v.MaxRows); i++ {
 		v.Term.MoveCursorPos(1, uint16(i))
-		fmt.Printf("\033[38;5;239m%4d\033[m  %s", int(startRowNum)+i-1, Highlighter(Tokenize(string(pNode.GetBuf().GetAll())), ".go", false))
-		pNode = pNode.Next()
+		fmt.Printf("\033[38;5;239m%4d\033[m  %s", i, string(cTab.Lines[i-1].GetAll()))
 	}
 }
 
@@ -129,7 +138,7 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.ClearRow()
 	fmt.Print("\033[48;5;25m")
-	for i := 0; i < v.MaxCols; i++ {
+	for i := 0; i < int(v.MaxCols); i++ {
 		fmt.Print(" ")
 	}
 	var nl string
