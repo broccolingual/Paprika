@@ -126,15 +126,36 @@ func (v *View) DrawUnfocusRow(lineNum int, rowData string) {
 func (v *View) DrawAllRow() {
 	cTab := v.Tabs[v.TabIdx]
 	v.Term.InitCursorPos()
-	for i := 1; i < int(v.MaxRows); i++ {
+	for i := 2; i < int(v.MaxRows); i++ {
 		v.Term.MoveCursorPos(1, uint16(i))
-		fmt.Printf("\033[38;5;239m%4d\033[m  %s", i, string(cTab.Lines[i-1].GetAll()))
+		fmt.Printf("\033[38;5;239m%4d\033[m  %s", i-1, string(cTab.Lines[i-2].GetAll()))
 	}
 }
 
 // TODO: 開始行とカーソルの位置が一致しない問題の修正
 func (v *View) DrawAll() {
 	v.DrawAllRow()
+}
+
+func (v *View) UpdateTabBar() {
+	v.Term.MoveCursorPos(1, 1)
+	v.Term.ClearRow()
+	fmt.Print("\033[48;5;238m")
+	for i := 0; i < int(v.MaxCols); i++ {
+		fmt.Print(" ")
+	}
+	fmt.Print("\033[m")
+	v.Term.MoveCursorPos(1, 1)
+	for i, tab := range v.Tabs {
+		if i == v.TabIdx {
+			fmt.Print("\033[m")
+			fmt.Printf(" %s |", tab.FilePath)
+		} else {
+			fmt.Print("\033[48;5;238m")
+			fmt.Printf(" %s |", tab.FilePath)
+		}
+	}
+	fmt.Print("\033[m")
 }
 
 func (v *View) UpdateStatusBar(inputRune rune) {
@@ -165,8 +186,7 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 	}
 	fmt.Print("\033[m")
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
-	fmt.Printf("\033[48;5;25m\033[1m %s\033[m\033[48;5;25m [%d/%d]", cTab.FilePath, v.TabIdx+1, len(v.Tabs))
-	fmt.Printf(" | Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
+	fmt.Printf("\033[48;5;25m Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
 	fmt.Printf(" | %s | Unicode %U", sf, inputRune)
 	fmt.Print("\033[m")
 }
@@ -174,13 +194,14 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 func (v *View) Reflesh(inputRune rune) {
 	cTab := v.GetCurrentTab()
 	v.Term.ClearAll()
+	v.UpdateTabBar()
 	v.DrawAll()
 	v.UpdateStatusBar(inputRune)
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
+	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row+1)
 }
 
 func (v *View) RefleshCursorOnly(inputRune rune) {
 	cTab := v.GetCurrentTab()
 	v.UpdateStatusBar(inputRune)
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row)
+	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row+1)
 }
