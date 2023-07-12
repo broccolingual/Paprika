@@ -155,3 +155,43 @@ func (ut *UnixTerm) InitCursorPos() {
 func (ut *UnixTerm) MoveCursorPos(col uint16, row uint16) {
 	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }
+
+func (ut *UnixTerm) SetColor(c uint8) {
+	ut.SetAttr(fmt.Sprintf("\033[38;5;%dm", c))
+}
+
+func (ut *UnixTerm) SetBGColor(c uint8) {
+	ut.SetAttr(fmt.Sprintf("\033[48;5;%dm", c))
+}
+
+func (ut *UnixTerm) SetBold() {
+	ut.SetAttr("\033[1m")
+}
+
+func (ut *UnixTerm) SetItalic() {
+	ut.SetAttr("\033[3m")
+}
+
+func (ut *UnixTerm) SetUnderbar() {
+	ut.SetAttr("\033[4m")
+}
+
+func (ut *UnixTerm) SetBlink() {
+	ut.SetAttr("\033[5m")
+}
+
+func (ut *UnixTerm) SetFastBlink() {
+	ut.SetAttr("\033[6m")
+}
+
+func (ut *UnixTerm) SetInversion() {
+	ut.SetAttr("\033[7m")
+}
+
+func (ut *UnixTerm) SetHide() {
+	ut.SetAttr("\033[8m")
+}
+
+func (ut *UnixTerm) ResetStyle() {
+	ut.SetAttr("\033[m")
+}

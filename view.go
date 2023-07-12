@@ -106,33 +106,18 @@ func (v *View) GetCurrentTab() *Editor {
 	return v.Tabs[v.TabIdx]
 }
 
-// TODO: 描画関数の修正
-func (v *View) DrawFocusRow(lineNum int, rowData string) {
-	v.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("\033[48;5;235m")
-	for i := 0; i < int(v.MaxCols); i++ {
-		fmt.Printf(" ")
-	}
-	fmt.Printf("\033[m")
-	v.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("\033[1m%4d\033[m  \033[48;5;235m%s\033[m", lineNum, Highlighter(Tokenize(rowData), ".go", true))
-}
-
-func (v *View) DrawUnfocusRow(lineNum int, rowData string) {
-	v.Term.MoveCursorPos(1, uint16(lineNum))
-	fmt.Printf("\033[38;5;239m%4d\033[m  %s", lineNum, Highlighter(Tokenize(rowData), ".go", false))
-}
-
 func (v *View) DrawAllRow() {
 	cTab := v.Tabs[v.TabIdx]
 	v.Term.InitCursorPos()
 	for i := 2; i < int(v.MaxRows); i++ {
 		v.Term.MoveCursorPos(1, uint16(i))
-		fmt.Printf("\033[38;5;239m%4d\033[m  %s", i-1, string(cTab.Lines[i-2].GetAll()))
+		v.Term.SetColor(240)
+		fmt.Printf("%4d", i-1)
+		v.Term.ResetStyle()
+		fmt.Printf("  %s", string(cTab.Lines[i-2].GetAll()))
 	}
 }
 
-// TODO: 開始行とカーソルの位置が一致しない問題の修正
 func (v *View) DrawAll() {
 	v.DrawAllRow()
 }
@@ -140,29 +125,31 @@ func (v *View) DrawAll() {
 func (v *View) UpdateTabBar() {
 	v.Term.MoveCursorPos(1, 1)
 	v.Term.ClearRow()
-	fmt.Print("\033[48;5;238m")
+	v.Term.SetBGColor(240)
 	for i := 0; i < int(v.MaxCols); i++ {
 		fmt.Print(" ")
 	}
-	fmt.Print("\033[m")
+	v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, 1)
 	for i, tab := range v.Tabs {
 		if i == v.TabIdx {
-			fmt.Print("\033[m")
+			v.Term.ResetStyle()
+			v.Term.SetBold()
 			fmt.Printf(" %s |", tab.FilePath)
 		} else {
-			fmt.Print("\033[48;5;238m")
+			v.Term.ResetStyle()
+			v.Term.SetBGColor(240)
 			fmt.Printf(" %s |", tab.FilePath)
 		}
 	}
-	fmt.Print("\033[m")
+	v.Term.ResetStyle()
 }
 
 func (v *View) UpdateStatusBar(inputRune rune) {
 	cTab := v.GetCurrentTab()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.ClearRow()
-	fmt.Print("\033[48;5;25m")
+	v.Term.SetBGColor(25)
 	for i := 0; i < int(v.MaxCols); i++ {
 		fmt.Print(" ")
 	}
@@ -184,11 +171,12 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 	case false:
 		sf = "*Not saved"
 	}
-	fmt.Print("\033[m")
+	v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
-	fmt.Printf("\033[48;5;25m Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
+	v.Term.SetBGColor(25)
+	fmt.Printf(" Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
 	fmt.Printf(" | %s | Unicode %U", sf, inputRune)
-	fmt.Print("\033[m")
+	v.Term.ResetStyle()
 }
 
 func (v *View) Reflesh(inputRune rune) {
