@@ -12,16 +12,16 @@ type View struct {
 	Event	  *Event
 	Tabs    []*Editor
 	TabIdx  int
-	MaxRows uint16
-	MaxCols uint16
+	Window  *WinSize
 }
 
 func NewView() *View {
 	v := new(View)
 	v.Term = common.NewUnixTerm()
+	v.Event = NewEvent()
 	v.Tabs = make([]*Editor, 0)
 	v.TabIdx = 0
-	v.Event = NewEvent()
+	v.Window = new(WinSize)
 	return v
 }
 
@@ -53,7 +53,7 @@ func (v *View) MainLoop() {
 // 画面サイズが変更されたかを検知
 func (v *View) IsWinSizeChanged(ws WinSize) (isChanged bool) {
 	isChanged = false
-	if v.MaxRows != ws.Row || v.MaxCols != ws.Col {
+	if v.Window.Row != ws.Row || v.Window.Col != ws.Col {
 		isChanged = true
 	}
 	return
@@ -61,8 +61,7 @@ func (v *View) IsWinSizeChanged(ws WinSize) (isChanged bool) {
 
 // 画面サイズの変更
 func (v *View) ChangeWinSize(ws WinSize) {
-	v.MaxRows = ws.Row
-	v.MaxCols = ws.Col
+	v.Window = &ws
 }
 
 // タブの追加
@@ -106,7 +105,7 @@ func (v *View) GetCurrentTab() *Editor {
 	return v.Tabs[v.TabIdx]
 }
 
-func (v *View) DrawRow(vPos uint16, lineNum uint16) {
+func (v *View) DrawRow(vPos uint, lineNum uint) {
 	cTab := v.GetCurrentTab()
 	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, vPos)
@@ -117,13 +116,13 @@ func (v *View) DrawRow(vPos uint16, lineNum uint16) {
 	fmt.Printf("%s", string(cTab.Lines[lineNum-1].GetAll()))
 }
 
-func (v *View) DrawFocusRow(vPos uint16, lineNum uint16) {
+func (v *View) DrawFocusRow(vPos uint, lineNum uint) {
 	cTab := v.GetCurrentTab()
 	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, vPos)
 	v.Term.ClearRow()
 	v.Term.SetBGColor(235)
-	for i := 0; i < int(v.MaxCols); i++ {
+	for i := 0; i < int(v.Window.Col); i++ {
 		fmt.Print(" ")
 	}
 	v.Term.ResetStyle()
@@ -140,15 +139,15 @@ func (v *View) DrawAllRow() {
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	defer v.Term.ResetStyle()
 	v.Term.InitCursorPos()
-	for i := 1; i < int(v.MaxRows - 1); i++ {
+	for i := 1; i < int(v.Window.Row - 1); i++ {
 		cLineNum := int(cTab.ScrollRow) + i - 1
 		if cLineNum >= len(cTab.Lines) {
 			break
 		}
-		if cTab.IsTargetRow(uint16(cLineNum)) {
-			v.DrawFocusRow(uint16(i+1), uint16(cLineNum))
+		if cTab.IsTargetRow(uint(cLineNum)) {
+			v.DrawFocusRow(uint(i+1), uint(cLineNum))
 		} else {
-			v.DrawRow(uint16(i+1), uint16(cLineNum))
+			v.DrawRow(uint(i+1), uint(cLineNum))
 		}
 	}
 }
@@ -160,7 +159,7 @@ func (v *View) UpdateTabBar() {
 	v.Term.MoveCursorPos(1, 1)
 	v.Term.ClearRow()
 	v.Term.SetBGColor(235)
-	for i := 0; i < int(v.MaxCols); i++ {
+	for i := 0; i < int(v.Window.Col); i++ {
 		fmt.Print(" ")
 	}
 	v.Term.ResetStyle()
@@ -192,10 +191,10 @@ func (v *View) UpdateStatusBar() {
 	cTab := v.GetCurrentTab()
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	defer v.Term.ResetStyle()
-	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
+	v.Term.MoveCursorPos(1, uint(v.Window.Row))
 	v.Term.ClearRow()
 	v.Term.SetBGColor(25)
-	for i := 0; i < int(v.MaxCols); i++ {
+	for i := 0; i < int(v.Window.Col); i++ {
 		fmt.Print(" ")
 	}
 	var nl string
@@ -210,7 +209,7 @@ func (v *View) UpdateStatusBar() {
 		nl = "Unknown"
 	}
 	v.Term.ResetStyle()
-	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
+	v.Term.MoveCursorPos(1, uint(v.Window.Row))
 	v.Term.SetBGColor(25)
 	fmt.Printf(" Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
 }
@@ -224,15 +223,15 @@ func (v *View) Reflesh() {
 	v.UpdateStatusBar()
 }
 
-func (v *View) RefleshTargetRow(rowNum uint16) {
+func (v *View) RefleshTargetRow(rowNum uint) {
 	cTab := v.GetCurrentTab()
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
-	v.Term.MoveCursorPos(1, uint16(rowNum-cTab.ScrollRow+2))
+	v.Term.MoveCursorPos(1, uint(rowNum-cTab.ScrollRow+2))
 	v.Term.ClearRow()
 	if cTab.IsTargetRow(rowNum) {
-		v.DrawFocusRow(uint16(rowNum-cTab.ScrollRow+2), rowNum)
+		v.DrawFocusRow(uint(rowNum-cTab.ScrollRow+2), rowNum)
 	} else {
-		v.DrawRow(uint16(rowNum-cTab.ScrollRow+2), rowNum)
+		v.DrawRow(uint(rowNum-cTab.ScrollRow+2), rowNum)
 	}
 }
 

@@ -119,7 +119,6 @@ func (v *View) processInput(r rune) uint8 {
 		if !v.DeleteTab() {
 			return 1
 		}
-		cTab.IsSaved = false
 		v.Reflesh()
 	case CTRL_Z: // Comment Out
 	case ESC:
@@ -164,7 +163,7 @@ func (v *View) processInput(r rune) uint8 {
 	case KEY_DOWN: // Scroll Down
 		if !cTab.IsLastRow() { // Cursor is not on the bottom
 			prevCol := cTab.Cursor.Col
-			if cTab.ScrollRow + v.MaxRows - 3 <= cTab.Cursor.Row {
+			if cTab.ScrollRow + uint(v.Window.Row) - 3 <= cTab.Cursor.Row {
 				cTab.ScrollDown()
 				cTab.MoveNextRow()
 				v.Reflesh()

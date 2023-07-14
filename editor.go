@@ -21,13 +21,13 @@ type Editor struct {
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ
-	ScrollRow  uint16          // 現在表示中の最上行
+	ScrollRow   uint            // 現在表示中の最上行
 }
 
 // カーソル構造体
 type Cursor struct {
-	Row uint16
-	Col uint16
+	Row uint
+	Col uint
 }
 
 // 新しいカーソルの取得
@@ -71,7 +71,7 @@ func (e *Editor) IsFirstRow() bool {
 }
 
 func (e *Editor) IsLastRow() bool {
-	return e.Cursor.Row >= uint16(len(e.Lines)) - 1
+	return e.Cursor.Row >= uint(len(e.Lines)) - 1
 }
 
 func (e *Editor) MoveNextRow() {
@@ -86,7 +86,7 @@ func (e *Editor) MovePrevRow() {
 	}
 }
 
-func (e *Editor) MoveTargetRow(row uint16) {
+func (e *Editor) MoveTargetRow(row uint) {
 	e.Cursor.Row = row
 }
 
@@ -95,10 +95,10 @@ func (e *Editor) MoveHeadRow() {
 }
 
 func (e *Editor) MoveTailRow() {
-	e.MoveTargetRow(uint16(len(e.Lines))-1)
+	e.MoveTargetRow(uint(len(e.Lines))-1)
 }
 
-func (e *Editor) IsTargetRow(rowNum uint16) bool {
+func (e *Editor) IsTargetRow(rowNum uint) bool {
 	return rowNum == e.Cursor.Row
 }
 
@@ -114,7 +114,7 @@ func (e *Editor) ScrollUp() {
 	}
 }
 
-func (e *Editor) ScrollTargetRow(row uint16) {
+func (e *Editor) ScrollTargetRow(row uint) {
 	e.ScrollRow = row
 }
 
@@ -123,7 +123,7 @@ func (e *Editor) ScrollHead() {
 }
 
 func (e *Editor) ScrollTail() {
-	e.ScrollTargetRow(uint16(len(e.Lines))-1)
+	e.ScrollTargetRow(uint(len(e.Lines))-1)
 }
 
 func (e *Editor) IsFirstCol() bool {
@@ -131,7 +131,7 @@ func (e *Editor) IsFirstCol() bool {
 }
 
 func (e *Editor) IsLastCol() bool {
-	return e.Cursor.Col > uint16(e.Lines[e.Cursor.Row-1].GetSize())
+	return e.Cursor.Col > uint(e.Lines[e.Cursor.Row-1].GetSize())
 }
 
 func (e *Editor) MoveNextCol() {
@@ -146,7 +146,7 @@ func (e *Editor) MovePrevCol() {
 	}
 }
 
-func (e *Editor) MoveTargetCol(col uint16) {
+func (e *Editor) MoveTargetCol(col uint) {
 	e.Cursor.Col = col
 }
 
@@ -155,11 +155,11 @@ func (e *Editor) MoveHeadCol() {
 }
 
 func (e *Editor) MoveTailCol() {
-	e.MoveTargetCol(uint16(e.Lines[e.Cursor.Row-1].GetSize())+1)
+	e.MoveTargetCol(uint(e.Lines[e.Cursor.Row-1].GetSize())+1)
 }
 
-func (e *Editor) GetCurrentMaxCol() uint16 {
-	return uint16(e.Lines[e.Cursor.Row-1].GetSize())
+func (e *Editor) GetCurrentMaxCol() uint {
+	return uint(e.Lines[e.Cursor.Row-1].GetSize())
 }
 
 // エディタに指定されたパスのファイルをロードして、行ノードを構成

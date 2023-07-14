@@ -4,6 +4,9 @@
 ## How to Use
 
 
+## About
+![](media/xanadu.drawio.png)
+
 ## License
 GNU General Public License
 

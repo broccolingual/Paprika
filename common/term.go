@@ -152,7 +152,7 @@ func (ut *UnixTerm) InitCursorPos() {
 
 // 対象行・列にカーソルを移動
 // row: 1~, col: 1~
-func (ut *UnixTerm) MoveCursorPos(col uint16, row uint16) {
+func (ut *UnixTerm) MoveCursorPos(col uint, row uint) {
 	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }
 
