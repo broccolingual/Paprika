@@ -42,7 +42,7 @@ func (v *View) MainLoop() {
 			case ws := <-e.WindowSize: // 画面サイズ変更イベント受け取り
 				if v.IsWinSizeChanged(ws) {
 					v.ChangeWinSize(ws)
-					v.Reflesh('\\')
+					v.Reflesh()
 				}
 			case <- e.Signal: // OSシグナルの受け取り
 				// termiosでシグナルを無効化しているため動作しない
@@ -106,16 +106,37 @@ func (v *View) GetCurrentTab() *Editor {
 	return v.Tabs[v.TabIdx]
 }
 
-func (v *View) DrawRow(vPos uint16, lineNum uint) {
+func (v *View) DrawRow(vPos uint16, lineNum uint16) {
+	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
 	v.Term.MoveCursorPos(1, vPos)
+	v.Term.ClearRow()
 	v.Term.SetColor(240)
-	fmt.Printf("%4d", lineNum)
+	fmt.Printf("%4d  ", lineNum)
 	v.Term.ResetStyle()
-	fmt.Printf("  %s", string(cTab.Lines[lineNum-1].GetAll()))
+	fmt.Printf("%s", string(cTab.Lines[lineNum-1].GetAll()))
+}
+
+func (v *View) DrawFocusRow(vPos uint16, lineNum uint16) {
+	defer v.Term.ResetStyle()
+	cTab := v.GetCurrentTab()
+	v.Term.MoveCursorPos(1, vPos)
+	v.Term.ClearRow()
+	v.Term.SetBGColor(235)
+	for i := 0; i < int(v.MaxCols); i++ {
+		fmt.Print(" ")
+	}
+	v.Term.ResetStyle()
+	v.Term.MoveCursorPos(1, vPos)
+	v.Term.SetBold()
+	fmt.Printf("%4d  ", lineNum)
+	v.Term.ResetStyle()
+	v.Term.SetBGColor(235)
+	fmt.Printf("%s", string(cTab.Lines[lineNum-1].GetAll()))
 }
 
 func (v *View) DrawAllRow() {
+	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
 	v.Term.InitCursorPos()
 	for i := 1; i < int(v.MaxRows - 1); i++ {
@@ -123,18 +144,19 @@ func (v *View) DrawAllRow() {
 		if cLineNum >= len(cTab.Lines) {
 			break
 		}
-		v.DrawRow(uint16(i+1), uint(cLineNum))
+		if cTab.IsTargetRow(uint16(cLineNum)) {
+			v.DrawFocusRow(uint16(i+1), uint16(cLineNum))
+		} else {
+			v.DrawRow(uint16(i+1), uint16(cLineNum))
+		}
 	}
 }
 
-func (v *View) DrawAll() {
-	v.DrawAllRow()
-}
-
 func (v *View) UpdateTabBar() {
+	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, 1)
 	v.Term.ClearRow()
-	v.Term.SetBGColor(240)
+	v.Term.SetBGColor(235)
 	for i := 0; i < int(v.MaxCols); i++ {
 		fmt.Print(" ")
 	}
@@ -144,17 +166,27 @@ func (v *View) UpdateTabBar() {
 		if i == v.TabIdx {
 			v.Term.ResetStyle()
 			v.Term.SetBold()
-			fmt.Printf(" %s |", tab.FilePath)
+			v.Term.SetColor(25)
+			fmt.Printf(" %s ", tab.FilePath)
+			v.Term.ResetStyle()
+			if !tab.IsSaved {
+				fmt.Print("* ")
+			}
+			fmt.Print("|")
 		} else {
 			v.Term.ResetStyle()
-			v.Term.SetBGColor(240)
-			fmt.Printf(" %s |", tab.FilePath)
+			v.Term.SetBGColor(235)
+			fmt.Printf(" %s ", tab.FilePath)
+			if !tab.IsSaved {
+				fmt.Print("* ")
+			}
+			fmt.Print("|")
 		}
 	}
-	v.Term.ResetStyle()
 }
 
-func (v *View) UpdateStatusBar(inputRune rune) {
+func (v *View) UpdateStatusBar() {
+	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.ClearRow()
@@ -173,32 +205,34 @@ func (v *View) UpdateStatusBar(inputRune rune) {
 	default:
 		nl = "Unknown"
 	}
-	var sf string
-	switch cTab.IsSaved {
-	case true:
-		sf = "Saved"
-	case false:
-		sf = "*Not saved"
-	}
 	v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.SetBGColor(25)
 	fmt.Printf(" Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
-	fmt.Printf(" | %s | Unicode %U", sf, inputRune)
-	v.Term.ResetStyle()
 }
 
-func (v *View) Reflesh(inputRune rune) {
+func (v *View) Reflesh() {
 	cTab := v.GetCurrentTab()
 	v.Term.ClearAll()
 	v.UpdateTabBar()
-	v.DrawAll()
-	v.UpdateStatusBar(inputRune)
+	v.DrawAllRow()
+	v.UpdateStatusBar()
 	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }
 
-func (v *View) RefleshCursorOnly(inputRune rune) {
+func (v *View) RefleshTargetRow(rowNum uint16) {
 	cTab := v.GetCurrentTab()
-	v.UpdateStatusBar(inputRune)
+	v.Term.MoveCursorPos(1, uint16(rowNum-cTab.ScrollRow+2))
+	v.Term.ClearRow()
+	if cTab.IsTargetRow(rowNum) {
+		v.DrawFocusRow(uint16(rowNum-cTab.ScrollRow+2), rowNum)
+	} else {
+		v.DrawRow(uint16(rowNum-cTab.ScrollRow+2), rowNum)
+	}
+}
+
+func (v *View) RefleshCursor() {
+	cTab := v.GetCurrentTab()
+	v.UpdateStatusBar()
 	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }

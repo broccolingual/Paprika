@@ -46,7 +46,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.Lines = make([]*common.GapBuffer, 0)
 	editor.TabSize = tabSize
 	editor.NL = -1
-	editor.IsSaved = false
+	editor.IsSaved = true
 	editor.ScrollRow = 1
 	return
 }
@@ -72,9 +72,7 @@ func (e *Editor) MovePrevRow() {
 }
 
 func (e *Editor) MoveTargetRow(row uint16) {
-	if !e.IsFirstRow() && !e.IsLastRow() {
-		e.Cursor.Row = row
-	}
+	e.Cursor.Row = row
 }
 
 func (e *Editor) MoveHeadRow() {
@@ -83,6 +81,10 @@ func (e *Editor) MoveHeadRow() {
 
 func (e *Editor) MoveTailRow() {
 	e.MoveTargetRow(uint16(len(e.Lines))-1)
+}
+
+func (e *Editor) IsTargetRow(rowNum uint16) bool {
+	return rowNum == e.Cursor.Row
 }
 
 func (e *Editor) ScrollDown() {
@@ -98,9 +100,7 @@ func (e *Editor) ScrollUp() {
 }
 
 func (e *Editor) ScrollTargetRow(row uint16) {
-	if !e.IsFirstRow() && !e.IsLastRow() {
-		e.ScrollRow = row
-	}
+	e.ScrollRow = row
 }
 
 func (e *Editor) ScrollHead() {
@@ -132,9 +132,7 @@ func (e *Editor) MovePrevCol() {
 }
 
 func (e *Editor) MoveTargetCol(col uint16) {
-	if !e.IsFirstCol() && !e.IsLastCol() {
-		e.Cursor.Col = col
-	}
+	e.Cursor.Col = col
 }
 
 func (e *Editor) MoveHeadCol() {
@@ -142,7 +140,7 @@ func (e *Editor) MoveHeadCol() {
 }
 
 func (e *Editor) MoveTailCol() {
-	e.MoveTargetCol(uint16(e.Lines[e.Cursor.Row-1].GetSize()))
+	e.MoveTargetCol(uint16(e.Lines[e.Cursor.Row-1].GetSize())+1)
 }
 
 func (e *Editor) GetCurrentMaxCol() uint16 {

@@ -45,14 +45,6 @@ const (
 	KEY_LEFT  = 1004
 )
 
-var COMPLETION_LIST map[rune]rune = map[rune]rune{
-	'{':  '}',
-	'[':  ']',
-	'(':  ')',
-	'"':  '"',
-	'\'': '\'',
-}
-
 func parseKey(b []byte) (rune, int) {
 	if len(b) == 3 {
 		if b[0] == byte(27) && b[1] == '[' {
@@ -92,19 +84,25 @@ func (v *View) processInput(r rune) uint8 {
 	case CTRL_L:
 	case CTRL_M: // Enter
 	case CTRL_N:
-	case CTRL_O:
-	case CTRL_P:
+	case CTRL_O: // Move Top
+		cTab.MoveHeadRow()
+		cTab.ScrollHead()
+		v.Reflesh()
+	case CTRL_P: // Move Bottom
+		cTab.MoveTailRow()
+		cTab.ScrollTail()
+		v.Reflesh()
 	case CTRL_Q:
 	case CTRL_R: // Prev Tab
 		v.PrevTab()
-		v.Reflesh(r)
+		v.Reflesh()
 	case CTRL_S: // Save
 		_ = cTab.SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(cTab.FilePath)), cTab.NL)
 		cTab.IsSaved = true
-		v.RefleshCursorOnly(r)
+		v.RefleshCursor()
 	case CTRL_T: // Next Tab
 		v.NextTab()
-		v.Reflesh(r)
+		v.Reflesh()
 	case CTRL_U:
 	case CTRL_V: // Paste
 	case CTRL_W:
@@ -115,7 +113,7 @@ func (v *View) processInput(r rune) uint8 {
 			return 1
 		}
 		cTab.IsSaved = false
-		v.Reflesh(r)
+		v.Reflesh()
 	case CTRL_Z: // Comment Out
 	case ESC:
 		return 1
@@ -123,58 +121,53 @@ func (v *View) processInput(r rune) uint8 {
 	case BACKSPACE: // Backspace
 	case KEY_UP: // Scroll Up
 		if !cTab.IsFirstRow() { // Cursor is not on the top
-			prevCol := cTab.GetCurrentMaxCol()
+			prevCol := cTab.Cursor.Col
 			if cTab.ScrollRow >= cTab.Cursor.Row {
 				cTab.ScrollUp()
 				cTab.MovePrevRow()
-				v.Reflesh(r)
+				v.Reflesh()
 			} else {
 				cTab.MovePrevRow()
-				v.RefleshCursorOnly(r)
+				v.RefleshTargetRow(cTab.Cursor.Row + 1)
+				v.RefleshTargetRow(cTab.Cursor.Row)
+				v.RefleshCursor()
 			}
-			// TODO: Fix this
 			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
 				cTab.MoveTailCol()
-				v.RefleshCursorOnly(r)
+				v.RefleshCursor()
 			}
 		}
 	case KEY_DOWN: // Scroll Down
 		if !cTab.IsLastRow() { // Cursor is not on the bottom
-			prevCol := cTab.GetCurrentMaxCol()
+			prevCol := cTab.Cursor.Col
 			if cTab.ScrollRow + v.MaxRows - 3 <= cTab.Cursor.Row {
 				cTab.ScrollDown()
 				cTab.MoveNextRow()
-				v.Reflesh(r)
+				v.Reflesh()
 			} else {
 				cTab.MoveNextRow()
-				v.RefleshCursorOnly(r)
+				v.RefleshTargetRow(cTab.Cursor.Row - 1)
+				v.RefleshTargetRow(cTab.Cursor.Row)
+				v.RefleshCursor()
 			}
-			// TODO: Fix this
 			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
 				cTab.MoveTailCol()
-				v.RefleshCursorOnly(r)
+				v.RefleshCursor()
 			}
 		}
 	case KEY_RIGHT:
 		if !cTab.IsLastCol() {
 			cTab.MoveNextCol()
-			v.RefleshCursorOnly(r)
+			v.RefleshCursor()
 		}
 	case KEY_LEFT:
 		if !cTab.IsFirstCol() {
 			cTab.MovePrevCol()
-			v.RefleshCursorOnly(r)
+			v.RefleshCursor()
 		}
 	default:
-		switch r { // Completion
-		case rune('('):
-		case rune('{'):
-		case rune('['):
-		case rune('\''):
-		case rune('"'):
-		case rune('\t'):
-		default:
-		}
+		cTab.IsSaved = false
+		v.UpdateTabBar()
 	}
 	return 0
 }
