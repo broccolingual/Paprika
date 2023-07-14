@@ -82,13 +82,19 @@ func (gBuf *GapBuffer) Get(idx int) rune {
 	return gBuf.buf[idx]
 }
 
-// バッファのruneをすべて取得
-func (gBuf *GapBuffer) GetAll() []rune {
-	var tmp []rune
-	for i := 0; i < int(gBuf.size-gBuf.gapSize); i++ {
-		tmp = append(tmp, gBuf.Get(i))
+func (gBuf *GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
+	if endIdx - 1 < gBuf.GetSize() {
+		for i := startIdx; i < endIdx; i++ {
+			out = append(out, gBuf.Get(i))
+		}
 	}
-	return tmp
+	return
+}
+
+// バッファのruneをすべて取得
+func (gBuf *GapBuffer) GetAll() (out []rune) {
+	out = gBuf.GetFrom(0, gBuf.GetSize())
+	return
 }
 
 // バッファにruneを挿入
@@ -118,6 +124,14 @@ func (gBuf *GapBuffer) Erase(idx int) bool {
 	gBuf.moveGap(idx)
 	gBuf.gapSize++
 	return true
+}
+
+func (gBuf *GapBuffer) EraseFrom(startIdx int, endIdx int) {
+	if endIdx - 1 < gBuf.GetSize() {
+		for i := startIdx; i < endIdx; i++ {
+			gBuf.Erase(startIdx)
+		}
+	}
 }
 
 // バッファから複数のruneを削除

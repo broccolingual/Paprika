@@ -83,6 +83,13 @@ func (v *View) processInput(r rune) uint8 {
 	case CTRL_K:
 	case CTRL_L:
 	case CTRL_M: // Enter
+		// TODO: 行が挿入されない問題の修正
+		cTab.InsertLine(uint(cTab.Cursor.Row-1))
+		tmp := cTab.Lines[cTab.Cursor.Row-1].GetFrom(int(cTab.Cursor.Col), cTab.Lines[cTab.Cursor.Row-1].GetSize())
+		cTab.Lines[cTab.Cursor.Row-1].EraseFrom(int(cTab.Cursor.Col), cTab.Lines[cTab.Cursor.Row-1].GetSize())
+		cTab.MoveNextCol()
+		cTab.Lines[cTab.Cursor.Row-1].AppendAll(tmp)
+		v.Reflesh()
 	case CTRL_N:
 	case CTRL_O: // Move Top
 		cTab.MoveHeadRow()

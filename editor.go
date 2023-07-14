@@ -11,7 +11,7 @@ import (
 	"golang-text-editor/utils"
 )
 
-const LINE_BUF_MAX = 255 // 1行のバッファサイズ
+const LINE_BUF_MAX = 256 // 1行のバッファサイズ
 
 // エディタ構造体
 type Editor struct {
@@ -49,6 +49,21 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.IsSaved = true
 	editor.ScrollRow = 1
 	return
+}
+
+// TODO: 行が挿入されない問題の修正
+func (e *Editor) InsertLine(idx uint) {
+	var newLines []*common.GapBuffer
+	_ = copy(newLines, e.Lines[:idx])
+	newLines[idx] = common.NewGapBuffer(nil, LINE_BUF_MAX)
+	e.Lines = append(newLines, e.Lines[idx:]...)
+}
+
+// TODO: 行が削除されない問題の修正
+func (e *Editor) DeleteLine(idx uint) {
+	var newLines []*common.GapBuffer
+	_ = copy(newLines, e.Lines[:idx])
+	e.Lines = append(newLines, e.Lines[idx+1:]...)
 }
 
 func (e *Editor) IsFirstRow() bool {
