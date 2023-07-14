@@ -121,18 +121,50 @@ func (v *View) processInput(r rune) uint8 {
 		return 1
 	case SPACE: // Space
 	case BACKSPACE: // Backspace
-	case KEY_UP:
-		cTab.MovePrevRow()
-		v.RefleshCursorOnly(r)
-	case KEY_DOWN:
-		cTab.MoveNextRow()
-		v.RefleshCursorOnly(r)
+	case KEY_UP: // Scroll Up
+		if !cTab.IsFirstRow() { // Cursor is not on the top
+			prevCol := cTab.GetCurrentMaxCol()
+			if cTab.ScrollRow >= cTab.Cursor.Row {
+				cTab.ScrollUp()
+				cTab.MovePrevRow()
+				v.Reflesh(r)
+			} else {
+				cTab.MovePrevRow()
+				v.RefleshCursorOnly(r)
+			}
+			// TODO: Fix this
+			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
+				cTab.MoveTailCol()
+				v.RefleshCursorOnly(r)
+			}
+		}
+	case KEY_DOWN: // Scroll Down
+		if !cTab.IsLastRow() { // Cursor is not on the bottom
+			prevCol := cTab.GetCurrentMaxCol()
+			if cTab.ScrollRow + v.MaxRows - 3 <= cTab.Cursor.Row {
+				cTab.ScrollDown()
+				cTab.MoveNextRow()
+				v.Reflesh(r)
+			} else {
+				cTab.MoveNextRow()
+				v.RefleshCursorOnly(r)
+			}
+			// TODO: Fix this
+			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
+				cTab.MoveTailCol()
+				v.RefleshCursorOnly(r)
+			}
+		}
 	case KEY_RIGHT:
-		cTab.MoveNextCol()
-		v.RefleshCursorOnly(r)
+		if !cTab.IsLastCol() {
+			cTab.MoveNextCol()
+			v.RefleshCursorOnly(r)
+		}
 	case KEY_LEFT:
-		cTab.MovePrevCol()
-		v.RefleshCursorOnly(r)
+		if !cTab.IsFirstCol() {
+			cTab.MovePrevCol()
+			v.RefleshCursorOnly(r)
+		}
 	default:
 		switch r { // Completion
 		case rune('('):

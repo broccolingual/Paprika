@@ -106,15 +106,24 @@ func (v *View) GetCurrentTab() *Editor {
 	return v.Tabs[v.TabIdx]
 }
 
+func (v *View) DrawRow(vPos uint16, lineNum uint) {
+	cTab := v.GetCurrentTab()
+	v.Term.MoveCursorPos(1, vPos)
+	v.Term.SetColor(240)
+	fmt.Printf("%4d", lineNum)
+	v.Term.ResetStyle()
+	fmt.Printf("  %s", string(cTab.Lines[lineNum-1].GetAll()))
+}
+
 func (v *View) DrawAllRow() {
-	cTab := v.Tabs[v.TabIdx]
+	cTab := v.GetCurrentTab()
 	v.Term.InitCursorPos()
-	for i := 2; i < int(v.MaxRows); i++ {
-		v.Term.MoveCursorPos(1, uint16(i))
-		v.Term.SetColor(240)
-		fmt.Printf("%4d", i-1)
-		v.Term.ResetStyle()
-		fmt.Printf("  %s", string(cTab.Lines[i-2].GetAll()))
+	for i := 1; i < int(v.MaxRows - 1); i++ {
+		cLineNum := int(cTab.ScrollRow) + i - 1
+		if cLineNum >= len(cTab.Lines) {
+			break
+		}
+		v.DrawRow(uint16(i+1), uint(cLineNum))
 	}
 }
 
@@ -185,11 +194,11 @@ func (v *View) Reflesh(inputRune rune) {
 	v.UpdateTabBar()
 	v.DrawAll()
 	v.UpdateStatusBar(inputRune)
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row+1)
+	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }
 
 func (v *View) RefleshCursorOnly(inputRune rune) {
 	cTab := v.GetCurrentTab()
 	v.UpdateStatusBar(inputRune)
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row+1)
+	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }

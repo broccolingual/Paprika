@@ -21,7 +21,7 @@ type Editor struct {
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ
-	TopLineNum  uint          // 現在表示中の最上行
+	ScrollRow  uint16          // 現在表示中の最上行
 }
 
 // カーソル構造体
@@ -47,36 +47,106 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.IsSaved = false
-	editor.TopLineNum = 1
+	editor.ScrollRow = 1
 	return
 }
 
-// 行を1つ進める
+func (e *Editor) IsFirstRow() bool {
+	return e.Cursor.Row <= 1
+}
+
+func (e *Editor) IsLastRow() bool {
+	return e.Cursor.Row >= uint16(len(e.Lines)) - 1
+}
+
 func (e *Editor) MoveNextRow() {
-	if e.Cursor.Row < uint16(len(e.Lines)) {
+	if !e.IsLastRow() {
 		e.Cursor.Row++
 	}
 }
 
-// 行を1つ戻す
 func (e *Editor) MovePrevRow() {
-	if e.Cursor.Row > 1 {
+	if !e.IsFirstRow() {
 		e.Cursor.Row--
 	}
 }
 
-// 列を1つ進める
+func (e *Editor) MoveTargetRow(row uint16) {
+	if !e.IsFirstRow() && !e.IsLastRow() {
+		e.Cursor.Row = row
+	}
+}
+
+func (e *Editor) MoveHeadRow() {
+	e.MoveTargetRow(1)
+}
+
+func (e *Editor) MoveTailRow() {
+	e.MoveTargetRow(uint16(len(e.Lines))-1)
+}
+
+func (e *Editor) ScrollDown() {
+	if !e.IsLastRow() {
+		e.ScrollRow++
+	}
+}
+
+func (e *Editor) ScrollUp() {
+	if !e.IsFirstRow() {
+		e.ScrollRow--
+	}
+}
+
+func (e *Editor) ScrollTargetRow(row uint16) {
+	if !e.IsFirstRow() && !e.IsLastRow() {
+		e.ScrollRow = row
+	}
+}
+
+func (e *Editor) ScrollHead() {
+	e.ScrollTargetRow(1)
+}
+
+func (e *Editor) ScrollTail() {
+	e.ScrollTargetRow(uint16(len(e.Lines))-1)
+}
+
+func (e *Editor) IsFirstCol() bool {
+	return e.Cursor.Col <= 1
+}
+
+func (e *Editor) IsLastCol() bool {
+	return e.Cursor.Col > uint16(e.Lines[e.Cursor.Row-1].GetSize())
+}
+
 func (e *Editor) MoveNextCol() {
-	if e.Cursor.Col < uint16(e.Lines[e.Cursor.Row-1].GetSize()) {
+	if !e.IsLastCol() {
 		e.Cursor.Col++
 	}
 }
 
-// 列を1つ戻す
 func (e *Editor) MovePrevCol() {
-	if e.Cursor.Col > 1 {
+	if !e.IsFirstCol() {
 		e.Cursor.Col--
 	}
+}
+
+func (e *Editor) MoveTargetCol(col uint16) {
+	if !e.IsFirstCol() && !e.IsLastCol() {
+		e.Cursor.Col = col
+	}
+}
+
+func (e *Editor) MoveHeadCol() {
+	e.MoveTargetCol(1)
+}
+
+func (e *Editor) MoveTailCol() {
+	e.MoveTargetCol(uint16(e.Lines[e.Cursor.Row-1].GetSize()))
+}
+
+func (e *Editor) GetCurrentMaxCol() uint16 {
+	return uint16(e.Lines[e.Cursor.Row-1].GetSize())
 }
 
 // エディタに指定されたパスのファイルをロードして、行ノードを構成
@@ -102,7 +172,6 @@ func (e *Editor) LoadFile() {
 		if cnt == 0 { // 改行文字の判定
 			e.NL = utils.GetNLCode(replacedRune)
 		}
-		// TODO: 改行文字が混在している時の対応
 		switch e.NL { // 改行文字の削除
 		case utils.CRLF:
 			if len(replacedRune) >= 2 {
