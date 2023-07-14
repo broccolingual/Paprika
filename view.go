@@ -107,8 +107,8 @@ func (v *View) GetCurrentTab() *Editor {
 }
 
 func (v *View) DrawRow(vPos uint16, lineNum uint16) {
-	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
+	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, vPos)
 	v.Term.ClearRow()
 	v.Term.SetColor(240)
@@ -118,8 +118,8 @@ func (v *View) DrawRow(vPos uint16, lineNum uint16) {
 }
 
 func (v *View) DrawFocusRow(vPos uint16, lineNum uint16) {
-	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
+	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, vPos)
 	v.Term.ClearRow()
 	v.Term.SetBGColor(235)
@@ -136,8 +136,9 @@ func (v *View) DrawFocusRow(vPos uint16, lineNum uint16) {
 }
 
 func (v *View) DrawAllRow() {
-	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
+	defer v.Term.ResetStyle()
 	v.Term.InitCursorPos()
 	for i := 1; i < int(v.MaxRows - 1); i++ {
 		cLineNum := int(cTab.ScrollRow) + i - 1
@@ -153,6 +154,8 @@ func (v *View) DrawAllRow() {
 }
 
 func (v *View) UpdateTabBar() {
+	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, 1)
 	v.Term.ClearRow()
@@ -186,8 +189,9 @@ func (v *View) UpdateTabBar() {
 }
 
 func (v *View) UpdateStatusBar() {
-	defer v.Term.ResetStyle()
 	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
+	defer v.Term.ResetStyle()
 	v.Term.MoveCursorPos(1, uint16(v.MaxRows))
 	v.Term.ClearRow()
 	v.Term.SetBGColor(25)
@@ -213,15 +217,16 @@ func (v *View) UpdateStatusBar() {
 
 func (v *View) Reflesh() {
 	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	v.Term.ClearAll()
 	v.UpdateTabBar()
 	v.DrawAllRow()
 	v.UpdateStatusBar()
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }
 
 func (v *View) RefleshTargetRow(rowNum uint16) {
 	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	v.Term.MoveCursorPos(1, uint16(rowNum-cTab.ScrollRow+2))
 	v.Term.ClearRow()
 	if cTab.IsTargetRow(rowNum) {
@@ -233,6 +238,5 @@ func (v *View) RefleshTargetRow(rowNum uint16) {
 
 func (v *View) RefleshCursor() {
 	cTab := v.GetCurrentTab()
-	v.UpdateStatusBar()
-	v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }

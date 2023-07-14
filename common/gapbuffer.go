@@ -1,6 +1,5 @@
 package common
 
-// TODO: 文字単位のイテレータの実装
 type GapBuffer _GapBuffer
 
 // ギャップバッファ構造体
@@ -55,7 +54,7 @@ func (gBuf *GapBuffer) GetSize() int {
 }
 
 // バッファが空かどうかの判定
-func (gBuf *GapBuffer) IsBlank() bool {
+func (gBuf *GapBuffer) IsEmpty() bool {
 	if gBuf.GetSize() == 0 {
 		return true
 	}

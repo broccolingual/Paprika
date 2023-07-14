@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	UPDATE_WINSIZE_INTERVAL = time.Millisecond * 500
+	INTERVAL_UPDATE_WINSIZE = time.Millisecond * 100
 )
 
 type Event struct {
@@ -58,7 +58,7 @@ func (e *Event) GetWinSize() {
 		var ws WinSize
 		_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, os.Stdout.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
 		e.WindowSize <- ws
-		time.Sleep(UPDATE_WINSIZE_INTERVAL)
+		time.Sleep(INTERVAL_UPDATE_WINSIZE)
 	}
 }
 

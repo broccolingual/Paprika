@@ -99,7 +99,7 @@ func (v *View) processInput(r rune) uint8 {
 	case CTRL_S: // Save
 		_ = cTab.SaveNew(fmt.Sprintf("./bin/%s.bak", filepath.Base(cTab.FilePath)), cTab.NL)
 		cTab.IsSaved = true
-		v.RefleshCursor()
+		v.UpdateTabBar()
 	case CTRL_T: // Next Tab
 		v.NextTab()
 		v.Reflesh()
@@ -118,7 +118,23 @@ func (v *View) processInput(r rune) uint8 {
 	case ESC:
 		return 1
 	case SPACE: // Space
+		cTab.IsSaved = false
+		cTab.Lines[cTab.Cursor.Row-1].Insert(int(cTab.Cursor.Col-1), rune(' '))
+		cTab.MoveNextCol()
+		v.RefleshTargetRow(cTab.Cursor.Row)
+		v.RefleshCursor()
+		v.UpdateTabBar()
 	case BACKSPACE: // Backspace
+		if !cTab.Lines[cTab.Cursor.Row-1].IsEmpty() && cTab.Cursor.Col != 1 { // 行に何か入力されている場合
+			cTab.IsSaved = false
+			cTab.Lines[cTab.Cursor.Row-1].Erase(int(cTab.Cursor.Col-2))
+			cTab.MovePrevCol()
+			v.RefleshTargetRow(cTab.Cursor.Row)
+			v.RefleshCursor()
+			v.UpdateTabBar()
+		} else { // 行に何も入力されていない場合
+
+		}
 	case KEY_UP: // Scroll Up
 		if !cTab.IsFirstRow() { // Cursor is not on the top
 			prevCol := cTab.Cursor.Col
@@ -136,6 +152,7 @@ func (v *View) processInput(r rune) uint8 {
 				cTab.MoveTailCol()
 				v.RefleshCursor()
 			}
+			v.UpdateStatusBar()
 		}
 	case KEY_DOWN: // Scroll Down
 		if !cTab.IsLastRow() { // Cursor is not on the bottom
@@ -154,19 +171,26 @@ func (v *View) processInput(r rune) uint8 {
 				cTab.MoveTailCol()
 				v.RefleshCursor()
 			}
+			v.UpdateStatusBar()
 		}
 	case KEY_RIGHT:
 		if !cTab.IsLastCol() {
 			cTab.MoveNextCol()
 			v.RefleshCursor()
+			v.UpdateStatusBar()
 		}
 	case KEY_LEFT:
 		if !cTab.IsFirstCol() {
 			cTab.MovePrevCol()
 			v.RefleshCursor()
+			v.UpdateStatusBar()
 		}
 	default:
 		cTab.IsSaved = false
+		cTab.Lines[cTab.Cursor.Row-1].Insert(int(cTab.Cursor.Col-1), r)
+		cTab.MoveNextCol()
+		v.RefleshTargetRow(cTab.Cursor.Row)
+		v.RefleshCursor()
 		v.UpdateTabBar()
 	}
 	return 0
