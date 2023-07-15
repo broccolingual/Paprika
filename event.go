@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	INTERVAL_UPDATE_WINSIZE = time.Millisecond * 100
+	INTERVAL_KEY_SCAN = time.Millisecond * 50
+	INTERVAL_UPDATE_WINSIZE = time.Millisecond * 500
 )
 
 type Event struct {
@@ -49,6 +50,7 @@ func (e *Event) ScanInput() {
 				b = b[n:]
 			}
 		}
+		time.Sleep(INTERVAL_KEY_SCAN)
 	}
 }
 

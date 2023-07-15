@@ -51,19 +51,16 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	return
 }
 
-// TODO: 行が挿入されない問題の修正
 func (e *Editor) InsertLine(idx uint) {
-	var newLines []*common.GapBuffer
-	_ = copy(newLines, e.Lines[:idx])
-	newLines[idx] = common.NewGapBuffer(nil, LINE_BUF_MAX)
-	e.Lines = append(newLines, e.Lines[idx:]...)
+	e.Lines = append(e.Lines[:idx], append([]*common.GapBuffer{common.NewGapBuffer([]rune{}, LINE_BUF_MAX)}, e.Lines[idx:]...)...)
 }
 
-// TODO: 行が削除されない問題の修正
 func (e *Editor) DeleteLine(idx uint) {
-	var newLines []*common.GapBuffer
-	_ = copy(newLines, e.Lines[:idx])
-	e.Lines = append(newLines, e.Lines[idx+1:]...)
+	if idx < uint(len(e.Lines)-1) {
+		copy(e.Lines[idx:], e.Lines[idx+1:])
+	}
+	e.Lines[len(e.Lines)-1] = nil
+	e.Lines = e.Lines[:len(e.Lines)-1]
 }
 
 func (e *Editor) IsFirstRow() bool {

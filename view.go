@@ -239,3 +239,39 @@ func (v *View) RefleshCursor() {
 	cTab := v.GetCurrentTab()
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 }
+
+func (v *View) ScrollUp() {
+	cTab := v.GetCurrentTab()
+	prevCol := cTab.Cursor.Col
+	if cTab.ScrollRow >= cTab.Cursor.Row {
+		cTab.ScrollUp()
+		v.Reflesh()
+	} else {
+		v.RefleshTargetRow(cTab.Cursor.Row + 1)
+		v.RefleshTargetRow(cTab.Cursor.Row)
+		v.RefleshCursor()
+	}
+	if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
+		cTab.MoveTailCol()
+		v.RefleshCursor()
+	}
+	v.UpdateStatusBar()
+}
+
+func (v *View) ScrollDown() {
+	cTab := v.GetCurrentTab()
+	prevCol := cTab.Cursor.Col
+	if cTab.ScrollRow + uint(v.Window.Row) - 3 <= cTab.Cursor.Row {
+		cTab.ScrollDown()
+		v.Reflesh()
+	} else {
+		v.RefleshTargetRow(cTab.Cursor.Row - 1)
+		v.RefleshTargetRow(cTab.Cursor.Row)
+		v.RefleshCursor()
+	}
+	if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
+		cTab.MoveTailCol()
+		v.RefleshCursor()
+	}
+	v.UpdateStatusBar()
+}

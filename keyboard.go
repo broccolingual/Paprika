@@ -83,11 +83,14 @@ func (v *View) processInput(r rune) uint8 {
 	case CTRL_K:
 	case CTRL_L:
 	case CTRL_M: // Enter
-		// TODO: 行が挿入されない問題の修正
-		cTab.InsertLine(uint(cTab.Cursor.Row-1))
-		tmp := cTab.Lines[cTab.Cursor.Row-1].GetFrom(int(cTab.Cursor.Col), cTab.Lines[cTab.Cursor.Row-1].GetSize())
-		cTab.Lines[cTab.Cursor.Row-1].EraseFrom(int(cTab.Cursor.Col), cTab.Lines[cTab.Cursor.Row-1].GetSize())
-		cTab.MoveNextCol()
+		if !cTab.IsLastRow() {
+			v.ScrollDown()
+		}
+		cTab.InsertLine(uint(cTab.Cursor.Row))
+		tmp := cTab.Lines[cTab.Cursor.Row-1].GetFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].GetSize())
+		cTab.Lines[cTab.Cursor.Row-1].EraseFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].GetSize())
+		cTab.MoveNextRow()
+		cTab.MoveHeadCol()
 		cTab.Lines[cTab.Cursor.Row-1].AppendAll(tmp)
 		v.Reflesh()
 	case CTRL_N:
@@ -131,6 +134,9 @@ func (v *View) processInput(r rune) uint8 {
 		v.RefleshCursor()
 		v.UpdateTabBar()
 	case BACKSPACE: // Backspace
+		if !cTab.IsFirstRow() {
+			v.ScrollUp()
+		}
 		if !cTab.Lines[cTab.Cursor.Row-1].IsEmpty() && cTab.Cursor.Col != 1 { // 行に何か入力されている場合
 			cTab.IsSaved = false
 			cTab.Lines[cTab.Cursor.Row-1].Erase(int(cTab.Cursor.Col-2))
@@ -139,45 +145,22 @@ func (v *View) processInput(r rune) uint8 {
 			v.RefleshCursor()
 			v.UpdateTabBar()
 		} else { // 行に何も入力されていない場合
-
+			tmp := cTab.Lines[cTab.Cursor.Row-1].GetAll()
+			cTab.DeleteLine(uint(cTab.Cursor.Row-1))
+			cTab.MovePrevRow()
+			cTab.MoveTailCol()
+			cTab.Lines[cTab.Cursor.Row-1].AppendAll(tmp)
+			v.Reflesh()
 		}
 	case KEY_UP: // Scroll Up
-		if !cTab.IsFirstRow() { // Cursor is not on the top
-			prevCol := cTab.Cursor.Col
-			if cTab.ScrollRow >= cTab.Cursor.Row {
-				cTab.ScrollUp()
-				cTab.MovePrevRow()
-				v.Reflesh()
-			} else {
-				cTab.MovePrevRow()
-				v.RefleshTargetRow(cTab.Cursor.Row + 1)
-				v.RefleshTargetRow(cTab.Cursor.Row)
-				v.RefleshCursor()
-			}
-			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
-				cTab.MoveTailCol()
-				v.RefleshCursor()
-			}
-			v.UpdateStatusBar()
+		if !cTab.IsFirstRow() {
+			cTab.MovePrevRow()
+			v.ScrollUp()
 		}
 	case KEY_DOWN: // Scroll Down
-		if !cTab.IsLastRow() { // Cursor is not on the bottom
-			prevCol := cTab.Cursor.Col
-			if cTab.ScrollRow + uint(v.Window.Row) - 3 <= cTab.Cursor.Row {
-				cTab.ScrollDown()
-				cTab.MoveNextRow()
-				v.Reflesh()
-			} else {
-				cTab.MoveNextRow()
-				v.RefleshTargetRow(cTab.Cursor.Row - 1)
-				v.RefleshTargetRow(cTab.Cursor.Row)
-				v.RefleshCursor()
-			}
-			if prevCol > cTab.GetCurrentMaxCol() { // Cursor is on the last column
-				cTab.MoveTailCol()
-				v.RefleshCursor()
-			}
-			v.UpdateStatusBar()
+		if !cTab.IsLastRow() {
+			cTab.MoveNextRow()
+			v.ScrollDown()
 		}
 	case KEY_RIGHT:
 		if !cTab.IsLastCol() {
