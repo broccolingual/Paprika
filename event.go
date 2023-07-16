@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	INTERVAL_KEY_SCAN = time.Millisecond * 50
 	INTERVAL_UPDATE_WINSIZE = time.Millisecond * 500
 )
 
@@ -21,9 +20,9 @@ type Event struct {
 
 func NewEvent() *Event {
 	e := new(Event)
-	e.Key = make(chan rune)
-	e.WindowSize = make(chan WinSize)
-	e.Signal = make(chan os.Signal)
+	e.Key = make(chan rune, 1)
+	e.WindowSize = make(chan WinSize, 1)
+	e.Signal = make(chan os.Signal, 1)
 	return e
 }
 
@@ -50,7 +49,6 @@ func (e *Event) ScanInput() {
 				b = b[n:]
 			}
 		}
-		time.Sleep(INTERVAL_KEY_SCAN)
 	}
 }
 

@@ -223,6 +223,15 @@ func (v *View) Reflesh() {
 	v.UpdateStatusBar()
 }
 
+func (v *View) RefleshTextField() {
+	cTab := v.GetCurrentTab()
+	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
+	v.Term.MoveCursorPos(1, 2)
+	v.Term.ClearAfterCursor()
+	v.DrawAllRow()
+	v.UpdateStatusBar()
+}
+
 func (v *View) RefleshTargetRow(rowNum uint) {
 	cTab := v.GetCurrentTab()
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)

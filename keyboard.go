@@ -97,11 +97,11 @@ func (v *View) processInput(r rune) uint8 {
 	case CTRL_O: // Move Top
 		cTab.MoveHeadRow()
 		cTab.ScrollHead()
-		v.Reflesh()
+		v.RefleshTextField()
 	case CTRL_P: // Move Bottom
 		cTab.MoveTailRow()
 		cTab.ScrollTail()
-		v.Reflesh()
+		v.RefleshTextField()
 	case CTRL_Q:
 	case CTRL_R: // Prev Tab
 		v.PrevTab()
