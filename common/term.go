@@ -156,6 +156,14 @@ func (ut *UnixTerm) MoveCursorPos(col uint, row uint) {
 	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }
 
+func (ut *UnixTerm) ScrollDown(n uint8) {
+	ut.SetAttr(fmt.Sprintf("\033[%dS", n))
+}
+
+func (ut *UnixTerm) ScrollUp(n uint8) {
+	ut.SetAttr(fmt.Sprintf("\033[%dT", n))
+}
+
 func (ut *UnixTerm) SetColor(c uint8) {
 	ut.SetAttr(fmt.Sprintf("\033[38;5;%dm", c))
 }
