@@ -53,6 +53,7 @@ func (e *Event) ScanInput() {
 }
 
 // コンソールのウィンドウサイズの取得
+// TODO os.Signalでの実装に変更(SIGWINCH)
 func (e *Event) GetWinSize() {
 	for {
 		var ws WinSize

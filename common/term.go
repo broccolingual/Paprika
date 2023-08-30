@@ -2,204 +2,160 @@ package common
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"syscall"
-	"unsafe"
+	
+	"golang.org/x/sys/unix"
+	"github.com/pkg/term/termios"
 )
 
 type UnixTerm _UnixTerm
 
 type _UnixTerm struct {
-	origTermSetting *termios
+	origTtyState *unix.Termios
 }
 
-// TODO: デフォルトのtermiosライブラリへの置換
-
-// Define termios(unix) object
-type termios struct {
-	Iflag  uint32
-	Oflag  uint32
-	Cflag  uint32
-	Lflag  uint32
-	Cc     [20]byte
-	Ispeed uint32
-	Ospeed uint32
+func NewUnixTerm() *UnixTerm {
+	term := new(UnixTerm)
+	return term
 }
 
 // Set termios attribute
-func tcSetAttr(fd uintptr, termios *termios) error {
-	// TCSETS+1 == TCSETSW, because TCSAFLUSH doesn't exist
-	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(syscall.TCSETS+1), uintptr(unsafe.Pointer(termios))); err != 0 {
-		return err
-	}
-	return nil
+func (term *UnixTerm) tcSetAttr(attr *unix.Termios) error {
+	return termios.Tcsetattr(uintptr(os.Stdin.Fd()), termios.TCSANOW, attr)
 }
 
 // Get termios attribute
-func tcGetAttr(fd uintptr) *termios {
-	var termios = &termios{}
-	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TCGETS, uintptr(unsafe.Pointer(termios))); err != 0 {
-		log.Fatalf("Problem getting terminal attributes: %s\n", err)
-	}
-	return termios
+func (term *UnixTerm) tcGetAttr() (*unix.Termios, error) {
+	var attr unix.Termios
+	err := termios.Tcgetattr(uintptr(os.Stdin.Fd()), &attr)
+	return &attr, err
 }
 
 // Rawモード/非カノニカルモードの有効化
 // https://linuxjm.osdn.jp/html/LDP_man-pages/man3/termios.3.html
-// termios - Iflag
-// ^BRKINT: BrakeをNullバイトとして読み込む
-// INPCK: 入力のパリティチェック有効化
-// ICRNL: ^IGNCRの場合、CRをNLで置換
-// ISTRIP: 8bit目を落とす
-// IXON: 出力のXON/XOFFフロー制御の有効化
-
-// termios - Cflag
-// CS8: 文字サイズを8bitに指定
-
-// termios - Lflag
-// ECHO: 入力された文字をエコー
-// ICANON: カノニカルモードの有効化
-// IEXTEN: 実装依存の入力処理の有効化
-// ISIG: シグナルを発生させる(Ctrl+C/Z etc...)
-func (ut *UnixTerm) EnableRawMode() {
-	ut.origTermSetting = tcGetAttr(os.Stdin.Fd())
-	var raw termios
-	raw = *ut.origTermSetting
-	raw.Iflag &^= syscall.IGNBRK | syscall.BRKINT | syscall.PARMRK | syscall.ISTRIP | syscall.INLCR | syscall.IGNCR | syscall.ICRNL | syscall.IXON
-	raw.Cflag &^= syscall.CSIZE | syscall.PARENB
-	raw.Cflag |= syscall.CS8
-	raw.Oflag &^= syscall.OPOST
-	raw.Lflag &^= syscall.ECHO | syscall.ECHONL | syscall.ICANON | syscall.ISIG | syscall.IEXTEN
-	raw.Cc[syscall.VMIN+1] = 0
-	raw.Cc[syscall.VTIME+1] = 1
-	if e := tcSetAttr(os.Stdin.Fd(), &raw); e != nil {
-		log.Fatalf("Problem enabling raw mode: %s\n", e)
-	}
+func (term *UnixTerm) EnableRawMode() {
+	term.origTtyState, _ = term.tcGetAttr()
+	var attr unix.Termios
+	termios.Cfmakeraw(&attr)
+	term.tcSetAttr(&attr)
 }
 
 // Rawモード/非カノニカルモードの無効化
-func (ut *UnixTerm) DisableRawMode() {
-	if e := tcSetAttr(os.Stdin.Fd(), ut.origTermSetting); e != nil {
-		log.Fatalf("Problem disabling raw mode: %s\n", e)
-	}
-}
-
-func NewUnixTerm() *UnixTerm {
-	ut := new(UnixTerm)
-	return ut
+func (term *UnixTerm) DisableRawMode() {
+	term.tcSetAttr(term.origTtyState)
 }
 
 // エスケープシーケンスの送信
-func (ut *UnixTerm) SetAttr(code string) {
+func (term *UnixTerm) setAttr(code string) {
 	syscall.Write(0, []byte(code))
 }
 
 // Alternative Screen Bufferの有効化
-func (ut *UnixTerm) EnableAlternativeScreenBuffer() {
-	ut.SetAttr("\033[?1049h")
+func (term *UnixTerm) EnableAlternativeScreenBuffer() {
+	term.setAttr("\033[?1049h")
 }
 
 // Alternative Screen Bufferの無効化
-func (ut *UnixTerm) DisableAlternativeScreenBuffer() {
-	ut.SetAttr("\033[?1049l")
+func (term *UnixTerm) DisableAlternativeScreenBuffer() {
+	term.setAttr("\033[?1049l")
 }
 
 // カーソルの有効化
-func (ut *UnixTerm) EnableCursor() {
-	ut.SetAttr("\033[?25h")
+func (term *UnixTerm) EnableCursor() {
+	term.setAttr("\033[?25h")
 }
 
 // カーソルの無効化
-func (ut *UnixTerm) DisableCursor() {
-	ut.SetAttr("\033[?25l")
+func (term *UnixTerm) DisableCursor() {
+	term.setAttr("\033[?25l")
 }
 
 // カーソル以降をすべて消去
-func (ut *UnixTerm) ClearAfterCursor() {
-	ut.SetAttr("\033[0J")
+func (term *UnixTerm) ClearAfterCursor() {
+	term.setAttr("\033[0J")
 }
 
 // カーソル以前をすべて消去
-func (ut *UnixTerm) ClearBeforeCursor() {
-	ut.SetAttr("\033[1J")
+func (term *UnixTerm) ClearBeforeCursor() {
+	term.setAttr("\033[1J")
 }
 
 // スクリーンをすべて消去
-func (ut *UnixTerm) ClearAll() {
-	ut.SetAttr("\033[2J")
+func (term *UnixTerm) ClearAll() {
+	term.setAttr("\033[2J")
 }
 
 // その行のカーソルの右端を消去
-func (ut *UnixTerm) ClearRowRight() {
-	ut.SetAttr("\033[0K")
+func (term *UnixTerm) ClearRowRight() {
+	term.setAttr("\033[0K")
 }
 
 // その行カーソルの左端を消去
-func (ut *UnixTerm) ClearRowLeft() {
-	ut.SetAttr("\033[1K")
+func (term *UnixTerm) ClearRowLeft() {
+	term.setAttr("\033[1K")
 }
 
 // その行を消去
-func (ut *UnixTerm) ClearRow() {
-	ut.SetAttr("\033[2K")
+func (term *UnixTerm) ClearRow() {
+	term.setAttr("\033[2K")
 }
 
 // 1行1列にカーソルを移動
-func (ut *UnixTerm) InitCursorPos() {
-	ut.SetAttr("\033[1;1H")
+func (term *UnixTerm) InitCursorPos() {
+	term.setAttr("\033[1;1H")
 }
 
 // 対象行・列にカーソルを移動
 // row: 1~, col: 1~
-func (ut *UnixTerm) MoveCursorPos(col uint, row uint) {
-	ut.SetAttr(fmt.Sprintf("\033[%d;%dH", row, col))
+func (term *UnixTerm) MoveCursorPos(col uint, row uint) {
+	term.setAttr(fmt.Sprintf("\033[%d;%dH", row, col))
 }
 
-func (ut *UnixTerm) ScrollDown(n uint8) {
-	ut.SetAttr(fmt.Sprintf("\033[%dS", n))
+func (term *UnixTerm) ScrollDown(n uint8) {
+	term.setAttr(fmt.Sprintf("\033[%dS", n))
 }
 
-func (ut *UnixTerm) ScrollUp(n uint8) {
-	ut.SetAttr(fmt.Sprintf("\033[%dT", n))
+func (term *UnixTerm) ScrollUp(n uint8) {
+	term.setAttr(fmt.Sprintf("\033[%dT", n))
 }
 
-func (ut *UnixTerm) SetColor(c uint8) {
-	ut.SetAttr(fmt.Sprintf("\033[38;5;%dm", c))
+func (term *UnixTerm) SetColor(c uint8) {
+	term.setAttr(fmt.Sprintf("\033[38;5;%dm", c))
 }
 
-func (ut *UnixTerm) SetBGColor(c uint8) {
-	ut.SetAttr(fmt.Sprintf("\033[48;5;%dm", c))
+func (term *UnixTerm) SetBGColor(c uint8) {
+	term.setAttr(fmt.Sprintf("\033[48;5;%dm", c))
 }
 
-func (ut *UnixTerm) SetBold() {
-	ut.SetAttr("\033[1m")
+func (term *UnixTerm) SetBold() {
+	term.setAttr("\033[1m")
 }
 
-func (ut *UnixTerm) SetItalic() {
-	ut.SetAttr("\033[3m")
+func (term *UnixTerm) SetItalic() {
+	term.setAttr("\033[3m")
 }
 
-func (ut *UnixTerm) SetUnderbar() {
-	ut.SetAttr("\033[4m")
+func (term *UnixTerm) SetUnderbar() {
+	term.setAttr("\033[4m")
 }
 
-func (ut *UnixTerm) SetBlink() {
-	ut.SetAttr("\033[5m")
+func (term *UnixTerm) SetBlink() {
+	term.setAttr("\033[5m")
 }
 
-func (ut *UnixTerm) SetFastBlink() {
-	ut.SetAttr("\033[6m")
+func (term *UnixTerm) SetFastBlink() {
+	term.setAttr("\033[6m")
 }
 
-func (ut *UnixTerm) SetInversion() {
-	ut.SetAttr("\033[7m")
+func (term *UnixTerm) SetInversion() {
+	term.setAttr("\033[7m")
 }
 
-func (ut *UnixTerm) SetHide() {
-	ut.SetAttr("\033[8m")
+func (term *UnixTerm) SetHide() {
+	term.setAttr("\033[8m")
 }
 
-func (ut *UnixTerm) ResetStyle() {
-	ut.SetAttr("\033[m")
+func (term *UnixTerm) ResetStyle() {
+	term.setAttr("\033[m")
 }

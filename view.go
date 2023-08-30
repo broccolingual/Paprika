@@ -45,7 +45,7 @@ func (v *View) MainLoop() {
 					v.Reflesh()
 				}
 			case <- e.Signal: // OSシグナルの受け取り
-				// termiosでシグナルを無効化しているため動作しない
+				// termiosでシグナルを無効化しているため動作しない(仕様変更のため不明)
 			}
 		}
 }
