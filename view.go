@@ -30,8 +30,11 @@ func NewView() *View {
 
 func (v *View) MainLoop() {
 	e := v.Event
-	go e.ScanInput() // キー入力の読み取り用
-	go e.NotifySignal() // シグナルの読み取り
+	e.NotifySignal() // シグナルの読み取り
+
+	exit := make(chan interface{})
+	defer close(exit)
+	go e.ScanInput(exit) // キー入力の読み取り用
 
 	Loop:
 		for {
@@ -47,6 +50,7 @@ func (v *View) MainLoop() {
 						v.UpdateWinSize()
 						v.Reflesh()
 				}
+			default:
 			}
 		}
 }

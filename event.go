@@ -18,20 +18,30 @@ func NewEvent() *Event {
 	return e
 }
 
+func (e *Event) Close() {
+	close(e.Key)
+	close(e.Signal)
+}
+
 // 入力キーの読み取り
-func (e *Event) ScanInput() {
-	buf := make([]byte, 64)
+func (e *Event) ScanInput(exit <-chan interface{}) {
+	buf := make([]byte, 32)
 	for {
-		if n, err := os.Stdin.Read(buf); err == nil {
-			b := buf[:n]
-			for {
-				r, n := parseKey(b)
-				if n == 0 {
-					break
+		select {
+			case <-exit:
+				return
+			default:
+				if n, err := os.Stdin.Read(buf); err == nil {
+					b := buf[:n]
+					for {
+						r, n := parseKey(b)
+						if n == 0 {
+							break
+						}
+						e.Key <- r
+						b = b[n:]
+					}
 				}
-				e.Key <- r
-				b = b[n:]
-			}
 		}
 	}
 }

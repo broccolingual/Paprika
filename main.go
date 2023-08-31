@@ -18,6 +18,7 @@ func main() {
 	defer view.Term.DisableRawMode()
 	defer view.Term.DisableAlternativeScreenBuffer()
 	defer view.Term.EnableCursor()
+	defer view.Event.Close()
 
 	// 引数のパスをタブに追加
 	for i, path := range os.Args {
