@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"unsafe"
 	
 	"golang.org/x/sys/unix"
 	"github.com/pkg/term/termios"
 )
+
+type WinSize struct {
+	Row    uint16
+	Col    uint16
+	Xpixel uint16
+	Ypixel uint16
+}
 
 type UnixTerm _UnixTerm
 
@@ -59,6 +67,12 @@ func (term *UnixTerm) EnableAlternativeScreenBuffer() {
 // Alternative Screen Bufferの無効化
 func (term *UnixTerm) DisableAlternativeScreenBuffer() {
 	term.setAttr("\033[?1049l")
+}
+
+func (term *UnixTerm) GetWinSize() (uint16, uint16) {
+	var ws WinSize
+	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, os.Stdout.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
+	return ws.Row, ws.Col
 }
 
 // カーソルの有効化

@@ -37,5 +37,7 @@ func main() {
 		tab.LoadFile()
 	}
 	
+	view.UpdateWinSize() // 画面サイズの取得
+	view.Reflesh()
 	view.MainLoop() //メインループ
 }

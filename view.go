@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"syscall"
 
 	"golang-text-editor/common"
 	"golang-text-editor/utils"
@@ -12,7 +13,8 @@ type View struct {
 	Event	  *Event
 	Tabs    []*Editor
 	TabIdx  int
-	Window  *WinSize
+	WinRow	uint16
+	WinCol	uint16
 }
 
 func NewView() *View {
@@ -21,14 +23,14 @@ func NewView() *View {
 	v.Event = NewEvent()
 	v.Tabs = make([]*Editor, 0)
 	v.TabIdx = 0
-	v.Window = new(WinSize)
+	v.WinCol = 0
+	v.WinRow = 0
 	return v
 }
 
 func (v *View) MainLoop() {
 	e := v.Event
 	go e.ScanInput() // キー入力の読み取り用
-	go e.GetWinSize() // 画面サイズの更新
 	go e.NotifySignal() // シグナルの読み取り
 
 	Loop:
@@ -39,29 +41,21 @@ func (v *View) MainLoop() {
 				if exitCode != 0 {
 					break Loop
 				}
-			case ws := <-e.WindowSize: // 画面サイズ変更イベント受け取り
-				if v.IsWinSizeChanged(ws) {
-					v.ChangeWinSize(ws)
-					v.Reflesh()
+			case sig := <-e.Signal: // OSシグナルの受け取り
+				switch sig {
+					case syscall.SIGWINCH:
+						v.UpdateWinSize()
+						v.Reflesh()
 				}
-			case <- e.Signal: // OSシグナルの受け取り
-				// termiosでシグナルを無効化しているため動作しない(仕様変更のため不明)
 			}
 		}
 }
 
-// 画面サイズが変更されたかを検知
-func (v *View) IsWinSizeChanged(ws WinSize) (isChanged bool) {
-	isChanged = false
-	if v.Window.Row != ws.Row || v.Window.Col != ws.Col {
-		isChanged = true
-	}
-	return
-}
-
 // 画面サイズの変更
-func (v *View) ChangeWinSize(ws WinSize) {
-	v.Window = &ws
+func (v *View) UpdateWinSize() {
+	row, col := v.Term.GetWinSize()
+	v.WinRow = row
+	v.WinCol = col
 }
 
 // タブの追加
@@ -122,7 +116,7 @@ func (v *View) DrawFocusRow(vPos uint, lineNum uint) {
 	v.Term.MoveCursorPos(1, vPos)
 	v.Term.ClearRow()
 	v.Term.SetBGColor(235)
-	for i := 0; i < int(v.Window.Col); i++ {
+	for i := 0; i < int(v.WinCol); i++ {
 		fmt.Print(" ")
 	}
 	v.Term.ResetStyle()
@@ -139,7 +133,7 @@ func (v *View) DrawAllRow() {
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	defer v.Term.ResetStyle()
 	v.Term.InitCursorPos()
-	for i := 1; i < int(v.Window.Row - 1); i++ {
+	for i := 1; i < int(v.WinRow - 1); i++ {
 		cLineNum := int(cTab.ScrollRow) + i - 1
 		if cLineNum >= len(cTab.Lines) {
 			break
@@ -159,7 +153,7 @@ func (v *View) UpdateTabBar() {
 	v.Term.MoveCursorPos(1, 1)
 	v.Term.ClearRow()
 	v.Term.SetBGColor(235)
-	for i := 0; i < int(v.Window.Col); i++ {
+	for i := 0; i < int(v.WinCol); i++ {
 		fmt.Print(" ")
 	}
 	v.Term.ResetStyle()
@@ -191,10 +185,10 @@ func (v *View) UpdateStatusBar() {
 	cTab := v.GetCurrentTab()
 	defer v.Term.MoveCursorPos(cTab.Cursor.Col+6, cTab.Cursor.Row-cTab.ScrollRow+2)
 	defer v.Term.ResetStyle()
-	v.Term.MoveCursorPos(1, uint(v.Window.Row))
+	v.Term.MoveCursorPos(1, uint(v.WinRow))
 	v.Term.ClearRow()
 	v.Term.SetBGColor(25)
-	for i := 0; i < int(v.Window.Col); i++ {
+	for i := 0; i < int(v.WinCol); i++ {
 		fmt.Print(" ")
 	}
 	var nl string
@@ -209,7 +203,7 @@ func (v *View) UpdateStatusBar() {
 		nl = "Unknown"
 	}
 	v.Term.ResetStyle()
-	v.Term.MoveCursorPos(1, uint(v.Window.Row))
+	v.Term.MoveCursorPos(1, uint(v.WinRow))
 	v.Term.SetBGColor(25)
 	fmt.Printf(" Ln %d, Col %d | Tab Size: %d | %s", cTab.Cursor.Row, cTab.Cursor.Col, cTab.TabSize, nl)
 }
@@ -270,7 +264,7 @@ func (v *View) ScrollUp() {
 func (v *View) ScrollDown() {
 	cTab := v.GetCurrentTab()
 	prevCol := cTab.Cursor.Col
-	if cTab.ScrollRow + uint(v.Window.Row) - 3 <= cTab.Cursor.Row {
+	if cTab.ScrollRow + uint(v.WinRow) - 3 <= cTab.Cursor.Row {
 		cTab.ScrollDown()
 		v.Reflesh()
 	} else {
