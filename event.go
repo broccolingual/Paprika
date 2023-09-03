@@ -24,12 +24,12 @@ func (e *Event) Close() {
 }
 
 // 入力キーの読み取り
-func (e *Event) ScanInput(exit <-chan interface{}) {
-	buf := make([]byte, 32)
+func (e *Event) ScanInput(exit <-chan interface{}) error {
+	buf := make([]byte, 8)
 	for {
 		select {
 			case <-exit:
-				return
+				return nil
 			default:
 				if n, err := os.Stdin.Read(buf); err == nil {
 					b := buf[:n]
@@ -41,6 +41,8 @@ func (e *Event) ScanInput(exit <-chan interface{}) {
 						e.Key <- r
 						b = b[n:]
 					}
+				} else {
+					return err
 				}
 		}
 	}

@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"golang-text-editor/common"
-	"golang-text-editor/utils"
+	"github.com/broccolingual/Xanadu/common"
+	"github.com/broccolingual/Xanadu/utils"
 )
 
 const LINE_BUF_MAX = 256 // 1行のバッファサイズ
@@ -17,7 +17,7 @@ const LINE_BUF_MAX = 256 // 1行のバッファサイズ
 type Editor struct {
 	FilePath    string          // ファイルのパス
 	Cursor      *Cursor         // 現在のカーソル位置
-	Lines       []*common.GapBuffer // 行リスト
+	Lines       []*common.GapBuffer // 行リスト TODO: ファイル全体をGapBufferで管理する
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ

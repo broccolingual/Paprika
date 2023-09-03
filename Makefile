@@ -5,8 +5,6 @@ clean:
 
 install:
 	# install 3rd party library
-	# go install ~
-	# go mod download
 	go get golang.org/x/sys/unix
 	go get github.com/pkg/term/termios
 	go mod tidy

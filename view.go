@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"syscall"
 
-	"golang-text-editor/common"
-	"golang-text-editor/utils"
+	"github.com/broccolingual/Xanadu/common"
+	"github.com/broccolingual/Xanadu/utils"
 )
 
 type View struct {

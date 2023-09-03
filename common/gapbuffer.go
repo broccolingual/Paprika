@@ -1,5 +1,7 @@
 package common
 
+// https://tech.pjin.jp/blog/2020/11/18/buffer-4
+
 type GapBuffer _GapBuffer
 
 // ギャップバッファ構造体
@@ -76,7 +78,7 @@ func (gBuf *GapBuffer) Get(idx int) rune {
 	if idx >= gBuf.gapIdx {
 		idx += gBuf.gapSize
 	}
-	if idx >= gBuf.GetSize() {
+	if idx < gBuf.GetSize() {
 		// TODO: Overflowの対応
 	}
 	return gBuf.buf[idx]
