@@ -1,4 +1,4 @@
-package common
+package core
 
 // https://tech.pjin.jp/blog/2020/11/18/buffer-4
 
@@ -51,13 +51,13 @@ func (gBuf *GapBuffer) moveGap(idx int) {
 }
 
 // バッファ内のruneのサイズを取得
-func (gBuf *GapBuffer) GetSize() int {
+func (gBuf *GapBuffer) Length() int {
 	return gBuf.size - gBuf.gapSize
 }
 
 // バッファが空かどうかの判定
 func (gBuf *GapBuffer) IsEmpty() bool {
-	if gBuf.GetSize() == 0 {
+	if gBuf.Length() == 0 {
 		return true
 	}
 	return false
@@ -78,14 +78,14 @@ func (gBuf *GapBuffer) Get(idx int) rune {
 	if idx >= gBuf.gapIdx {
 		idx += gBuf.gapSize
 	}
-	if idx < gBuf.GetSize() {
+	if idx < gBuf.Length() {
 		// TODO: Overflowの対応
 	}
 	return gBuf.buf[idx]
 }
 
 func (gBuf *GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
-	if endIdx - 1 < gBuf.GetSize() {
+	if endIdx - 1 < gBuf.Length() {
 		for i := startIdx; i < endIdx; i++ {
 			out = append(out, gBuf.Get(i))
 		}
@@ -95,7 +95,7 @@ func (gBuf *GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
 
 // バッファのruneをすべて取得
 func (gBuf *GapBuffer) GetAll() (out []rune) {
-	out = gBuf.GetFrom(0, gBuf.GetSize())
+	out = gBuf.GetFrom(0, gBuf.Length())
 	return
 }
 
@@ -129,7 +129,7 @@ func (gBuf *GapBuffer) Erase(idx int) bool {
 }
 
 func (gBuf *GapBuffer) EraseFrom(startIdx int, endIdx int) {
-	if endIdx - 1 < gBuf.GetSize() {
+	if endIdx - 1 < gBuf.Length() {
 		for i := startIdx; i < endIdx; i++ {
 			gBuf.Erase(startIdx)
 		}
@@ -145,10 +145,10 @@ func (gBuf *GapBuffer) EraseAll(idx int, num int) {
 
 // バッファの末尾にruneを追加
 func (gBuf *GapBuffer) Append(ch rune) bool {
-	return gBuf.Insert(gBuf.GetSize(), ch)
+	return gBuf.Insert(gBuf.Length(), ch)
 }
 
 // バッファの末尾に複数のruneを追加
 func (gBuf *GapBuffer) AppendAll(data []rune) {
-	gBuf.InsertAll(gBuf.GetSize(), data)
+	gBuf.InsertAll(gBuf.Length(), data)
 }

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/broccolingual/Xanadu/common"
+	"github.com/broccolingual/Xanadu/core"
 	"github.com/broccolingual/Xanadu/utils"
 )
 
 type View struct {
-	Term    *common.UnixTerm
+	Term    *core.UnixTerm
 	Event	  *Event
 	Tabs    []*Editor
 	TabIdx  int
@@ -19,7 +19,7 @@ type View struct {
 
 func NewView() *View {
 	v := new(View)
-	v.Term = common.NewUnixTerm()
+	v.Term = core.NewUnixTerm()
 	v.Event = NewEvent()
 	v.Tabs = make([]*Editor, 0)
 	v.TabIdx = 0

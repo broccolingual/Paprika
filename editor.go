@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/broccolingual/Xanadu/common"
+	"github.com/broccolingual/Xanadu/core"
 	"github.com/broccolingual/Xanadu/utils"
 )
 
@@ -17,7 +17,7 @@ const LINE_BUF_MAX = 256 // 1行のバッファサイズ
 type Editor struct {
 	FilePath    string          // ファイルのパス
 	Cursor      *Cursor         // 現在のカーソル位置
-	Lines       []*common.GapBuffer // 行リスト TODO: ファイル全体をGapBufferで管理する
+	Lines       []*core.GapBuffer // 行リスト TODO: ファイル全体をGapBufferで管理する
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ
@@ -43,7 +43,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
 	editor.Cursor = NewCursor()
-	editor.Lines = make([]*common.GapBuffer, 0)
+	editor.Lines = make([]*core.GapBuffer, 0)
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.IsSaved = true
@@ -52,7 +52,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 }
 
 func (e *Editor) InsertLine(idx uint) {
-	e.Lines = append(e.Lines[:idx], append([]*common.GapBuffer{common.NewGapBuffer([]rune{}, LINE_BUF_MAX)}, e.Lines[idx:]...)...)
+	e.Lines = append(e.Lines[:idx], append([]*core.GapBuffer{core.NewGapBuffer([]rune{}, LINE_BUF_MAX)}, e.Lines[idx:]...)...)
 }
 
 func (e *Editor) DeleteLine(idx uint) {
@@ -128,7 +128,7 @@ func (e *Editor) IsFirstCol() bool {
 }
 
 func (e *Editor) IsLastCol() bool {
-	return e.Cursor.Col > uint(e.Lines[e.Cursor.Row-1].GetSize())
+	return e.Cursor.Col > uint(e.Lines[e.Cursor.Row-1].Length())
 }
 
 func (e *Editor) MoveNextCol() {
@@ -152,11 +152,11 @@ func (e *Editor) MoveHeadCol() {
 }
 
 func (e *Editor) MoveTailCol() {
-	e.MoveTargetCol(uint(e.Lines[e.Cursor.Row-1].GetSize())+1)
+	e.MoveTargetCol(uint(e.Lines[e.Cursor.Row-1].Length())+1)
 }
 
 func (e *Editor) GetCurrentMaxCol() uint {
-	return uint(e.Lines[e.Cursor.Row-1].GetSize())
+	return uint(e.Lines[e.Cursor.Row-1].Length())
 }
 
 // エディタに指定されたパスのファイルをロードして、行ノードを構成
@@ -194,7 +194,7 @@ func (e *Editor) LoadFile() {
 			}
 		}
 
-		e.Lines = append(e.Lines, common.NewGapBuffer(replacedRune, LINE_BUF_MAX))
+		e.Lines = append(e.Lines, core.NewGapBuffer(replacedRune, LINE_BUF_MAX))
 		if err == io.EOF {
 			break
 		} else if err != nil {

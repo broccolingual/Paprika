@@ -87,8 +87,8 @@ func (v *View) processInput(r rune) uint8 {
 			v.ScrollDown()
 		}
 		cTab.InsertLine(uint(cTab.Cursor.Row))
-		tmp := cTab.Lines[cTab.Cursor.Row-1].GetFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].GetSize())
-		cTab.Lines[cTab.Cursor.Row-1].EraseFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].GetSize())
+		tmp := cTab.Lines[cTab.Cursor.Row-1].GetFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].Length())
+		cTab.Lines[cTab.Cursor.Row-1].EraseFrom(int(cTab.Cursor.Col-1), cTab.Lines[cTab.Cursor.Row-1].Length())
 		cTab.MoveNextRow()
 		cTab.MoveHeadCol()
 		cTab.Lines[cTab.Cursor.Row-1].AppendAll(tmp)

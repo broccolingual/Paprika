@@ -1,8 +1,8 @@
-package common
+package core
 
 import "testing"
 
-func Test_GetSize(t *testing.T) {
+func Test_Length(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -21,8 +21,8 @@ func Test_GetSize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gBuf := NewGapBuffer(tt.fields.data, tt.fields.bufSize)
-			if got := gBuf.GetSize(); got != tt.want {
-				t.Errorf("GetSize() = %v, want %v", got, tt.want)
+			if got := gBuf.Length(); got != tt.want {
+				t.Errorf("Length() = %v, want %v", got, tt.want)
 			}
 		})
 	}
