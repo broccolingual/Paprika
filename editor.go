@@ -17,7 +17,7 @@ const LINE_BUF_MAX = 256 // 1行のバッファサイズ
 type Editor struct {
 	FilePath    string          // ファイルのパス
 	Cursor      *Cursor         // 現在のカーソル位置
-	Lines       []*core.GapBuffer // 行リスト TODO: ファイル全体をGapBufferで管理する
+	Lines       *core.DoublyLinkedList // 行リスト
 	TabSize     uint8           // タブサイズ (0~255)
 	NL          utils.NLCode          // 改行文字識別番号
 	IsSaved     bool            // セーブ済みフラグ
@@ -43,7 +43,7 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	editor = new(Editor)
 	editor.FilePath = filePath
 	editor.Cursor = NewCursor()
-	editor.Lines = make([]*core.GapBuffer, 0)
+	editor.CurrentLine = *core.NewDllRoot()
 	editor.TabSize = tabSize
 	editor.NL = -1
 	editor.IsSaved = true
@@ -51,35 +51,31 @@ func NewEditor(filePath string, tabSize uint8) (editor *Editor) {
 	return
 }
 
-func (e *Editor) InsertLine(idx uint) {
-	e.Lines = append(e.Lines[:idx], append([]*core.GapBuffer{core.NewGapBuffer([]rune{}, LINE_BUF_MAX)}, e.Lines[idx:]...)...)
+func (e *Editor) InsertLine(line *core.DoublyLinkedList) {
+	line.Insert(*core.NewGapBuffer([]rune{}, LINE_BUF_MAX))
 }
 
-func (e *Editor) DeleteLine(idx uint) {
-	if idx < uint(len(e.Lines)-1) {
-		copy(e.Lines[idx:], e.Lines[idx+1:])
-	}
-	e.Lines[len(e.Lines)-1] = nil
-	e.Lines = e.Lines[:len(e.Lines)-1]
+func (e *Editor) DeleteLine(line *core.DoublyLinkedList) {
+	line.Remove()
 }
 
 func (e *Editor) IsFirstRow() bool {
-	return e.Cursor.Row <= 1
+	return e.CurrentLine.IsRoot()
 }
 
 func (e *Editor) IsLastRow() bool {
-	return e.Cursor.Row >= uint(len(e.Lines)) - 1
+	return e.CurrentLine.Next().IsRoot()
 }
 
 func (e *Editor) MoveNextRow() {
 	if !e.IsLastRow() {
-		e.Cursor.Row++
+		e.CurrentLine = e.CurrentLine.Next()
 	}
 }
 
 func (e *Editor) MovePrevRow() {
 	if !e.IsFirstRow() {
-		e.Cursor.Row--
+		e.CurrentLine = e.CurrentLine.Prev()
 	}
 }
 
@@ -88,15 +84,15 @@ func (e *Editor) MoveTargetRow(row uint) {
 }
 
 func (e *Editor) MoveHeadRow() {
-	e.MoveTargetRow(1)
+	e.CurrentLine = e.CurrentLine.Root()
 }
 
 func (e *Editor) MoveTailRow() {
-	e.MoveTargetRow(uint(len(e.Lines))-1)
+	e.CurrentLine.Prev()
 }
 
 func (e *Editor) IsTargetRow(rowNum uint) bool {
-	return rowNum == e.Cursor.Row
+	return rowNum == e.CurrentLine.GetIdx() + 1
 }
 
 func (e *Editor) ScrollDown() {
@@ -152,11 +148,11 @@ func (e *Editor) MoveHeadCol() {
 }
 
 func (e *Editor) MoveTailCol() {
-	e.MoveTargetCol(uint(e.Lines[e.Cursor.Row-1].Length())+1)
+	e.MoveTargetCol(GetCurrentMaxCol()+1)
 }
 
 func (e *Editor) GetCurrentMaxCol() uint {
-	return uint(e.Lines[e.Cursor.Row-1].Length())
+	return uint(e.CurrentLine.GetBuf().Length())
 }
 
 // エディタに指定されたパスのファイルをロードして、行ノードを構成
@@ -194,7 +190,8 @@ func (e *Editor) LoadFile() {
 			}
 		}
 
-		e.Lines = append(e.Lines, core.NewGapBuffer(replacedRune, LINE_BUF_MAX))
+		e.CurrentLine.Insert(*core.NewGapBuffer(replacedRune, LINE_BUF_MAX))
+		e.CurrentLine = e.CurrentLine.Next()
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -226,10 +223,8 @@ func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 
 	var buf string
 
-	cnt := 0
-	for _, row := range e.Lines {
-		cnt++
-		buf += fmt.Sprintf("%s", string(row.GetAll()))
+	for e.CurrentLine.IsRoot() == false {
+		buf += fmt.Sprintf("%s", string(e.CurrentLine.GetBuf().GetAll()))
 		switch nl {
 		case utils.CRLF:
 			buf += "\r\n"
@@ -240,6 +235,7 @@ func (e *Editor) saveFile(filePath string, nl utils.NLCode) (saveBytes int) {
 		default:
 			buf += "\n"
 		}
+		e.CurrentLine = e.CurrentLine.Next()
 	}
 
 	saveBytes, err = fp.Write([]byte(buf))

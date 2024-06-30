@@ -76,6 +76,14 @@ func (dll *DoublyLinkedList) GetIdx() int {
 	return idx
 }
 
+func (dll *DoublyLinkedList) GetBuf() *GapBuffer {
+	return dll.buf
+}
+
+func (dll *DoublyLinkedList) Root() *DoublyLinkedList {
+	return dll.root
+}
+
 func (dll *DoublyLinkedList) Next() *DoublyLinkedList {
 	return dll.next
 }
