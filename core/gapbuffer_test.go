@@ -2,7 +2,7 @@ package core
 
 import "testing"
 
-func Test_Length(t *testing.T) {
+func Test_GB_Length(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -28,7 +28,7 @@ func Test_Length(t *testing.T) {
 	}
 }
 
-func Test_Insert(t *testing.T) {
+func Test_GB_Insert(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -58,7 +58,7 @@ func Test_Insert(t *testing.T) {
 	}
 }
 
-func Test_InsertAll(t *testing.T) {
+func Test_GB_InsertAll(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -88,7 +88,7 @@ func Test_InsertAll(t *testing.T) {
 	}
 }
 
-func Test_Erase(t *testing.T) {
+func Test_GB_Erase(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -117,7 +117,7 @@ func Test_Erase(t *testing.T) {
 	}
 }
 
-func Test_EraseAll(t *testing.T) {
+func Test_GB_EraseAll(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -147,7 +147,7 @@ func Test_EraseAll(t *testing.T) {
 	}
 }
 
-func Test_Append(t *testing.T) {
+func Test_GB_Append(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int
@@ -176,7 +176,7 @@ func Test_Append(t *testing.T) {
 	}
 }
 
-func Test_AppendAll(t *testing.T) {
+func Test_GB_AppendAll(t *testing.T) {
 	type fields struct {
 		data []rune
 		bufSize int

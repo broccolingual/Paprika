@@ -24,6 +24,7 @@ func (e *Event) Close() {
 }
 
 // 入力キーの読み取り
+// TODO: 入力が早すぎる場合にチャネルが閉じる問題を解決する
 func (e *Event) ScanInput(exit <-chan interface{}) error {
 	buf := make([]byte, 8)
 	for {

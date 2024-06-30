@@ -51,12 +51,12 @@ func (gBuf *GapBuffer) moveGap(idx int) {
 }
 
 // バッファ内のruneのサイズを取得
-func (gBuf *GapBuffer) Length() int {
+func (gBuf GapBuffer) Length() int {
 	return gBuf.size - gBuf.gapSize
 }
 
 // バッファが空かどうかの判定
-func (gBuf *GapBuffer) IsEmpty() bool {
+func (gBuf GapBuffer) IsEmpty() bool {
 	if gBuf.Length() == 0 {
 		return true
 	}
@@ -64,7 +64,7 @@ func (gBuf *GapBuffer) IsEmpty() bool {
 }
 
 // バッファのruneが一致するかの判定
-func (gBuf *GapBuffer) Check(idx int, data []rune) bool {
+func (gBuf GapBuffer) Check(idx int, data []rune) bool {
 	for i, elm := range data {
 		if gBuf.Get(idx+i) != elm {
 			return false
@@ -74,17 +74,18 @@ func (gBuf *GapBuffer) Check(idx int, data []rune) bool {
 }
 
 // バッファのruneを取得
-func (gBuf *GapBuffer) Get(idx int) rune {
+func (gBuf GapBuffer) Get(idx int) rune {
+	internalIdx := idx
 	if idx >= gBuf.gapIdx {
-		idx += gBuf.gapSize
+		internalIdx += gBuf.gapSize
 	}
-	if idx < gBuf.Length() {
-		// TODO: Overflowの対応
+	if idx >= gBuf.Length() {
+		return 0
 	}
-	return gBuf.buf[idx]
+	return gBuf.buf[internalIdx]
 }
 
-func (gBuf *GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
+func (gBuf GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
 	if endIdx - 1 < gBuf.Length() {
 		for i := startIdx; i < endIdx; i++ {
 			out = append(out, gBuf.Get(i))
@@ -94,7 +95,7 @@ func (gBuf *GapBuffer) GetFrom(startIdx int, endIdx int) (out []rune) {
 }
 
 // バッファのruneをすべて取得
-func (gBuf *GapBuffer) GetAll() (out []rune) {
+func (gBuf GapBuffer) GetAll() (out []rune) {
 	out = gBuf.GetFrom(0, gBuf.Length())
 	return
 }

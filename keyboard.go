@@ -39,10 +39,10 @@ const (
 const (
 	SPACE     = 32
 	BACKSPACE = 127
-	KEY_UP    = 1001
-	KEY_DOWN  = 1002
-	KEY_RIGHT = 1003
-	KEY_LEFT  = 1004
+	KEY_UP    = 10001
+	KEY_DOWN  = 10002
+	KEY_RIGHT = 10003
+	KEY_LEFT  = 10004
 )
 
 func parseKey(b []byte) (rune, int) {
